@@ -4,7 +4,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an n8n-mcp integration project that connects to an n8n instance via the Model Context Protocol (MCP).
+This is an n8n-MCP integration project that connects to an n8n instance via the Model Context Protocol (MCP). The repository serves as a documentation and configuration hub for designing, building, and validating n8n workflows using Claude Code.
+
+**Repository:** `thebytorsnowdog/Home`
+
+## Repository Structure
+
+```
+/home/user/Home
+├── CLAUDE.md          # Primary project documentation and AI assistant instructions
+├── .mcp.json          # MCP server configuration (not version-controlled)
+└── .git/              # Git repository metadata
+```
+
+This is a documentation-focused repository. The primary artifact is this `CLAUDE.md` file, which provides comprehensive instructions for AI assistants working with n8n-MCP tools. No application source code, build scripts, or test suites exist in this repo.
+
+## Development Workflow
+
+### Git Branching
+
+- **Main branch:** `main`
+- **Feature branches:** Use `claude/` prefix (e.g., `claude/add-claude-documentation-3gbXG`)
+- All changes should be developed on feature branches and merged to `main`
+
+### Making Changes
+
+Since this is a documentation-only repository, the workflow is:
+1. Create or check out a feature branch
+2. Edit `CLAUDE.md` or add configuration files as needed
+3. Commit with descriptive messages
+4. Push to the remote feature branch
+
+### Key Conventions
+
+- **Do not commit secrets.** The `.mcp.json` file contains API keys and should not be version-controlled if the repo becomes public.
+- **Keep documentation concise.** This file is loaded into AI assistant context windows; excessive length wastes tokens.
+- **Use structured formats.** Tables and code blocks are preferred over prose for reference material.
 
 ## Configuration
 
