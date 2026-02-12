@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Tracker 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f0eb;
+    --card: #ffffff;
+    --primary: #6b4c3b;
+    --primary-light: #8b6f5e;
+    --accent: #d4a373;
+    --text: #3d2c22;
+    --text-light: #7a6559;
+    --border: #e0d5cc;
+    --star: #f0b429;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 1.5rem 2rem;
+    text-align: center;
+  }
+  header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; }
+  header p { opacity: 0.85; font-size: 0.95rem; margin-top: 0.25rem; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 1.5rem;
+    max-width: 1300px;
+    margin: 1.5rem auto;
+    padding: 0 1.5rem;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Form */
+  .form-group { margin-bottom: 1rem; }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: var(--text-light);
+  }
+  .form-group input[type="text"],
+  .form-group input[type="date"] {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    background: white;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .star-rating {
+    display: flex;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .star-rating .star {
+    font-size: 1.6rem;
+    color: var(--border);
+    transition: color 0.15s, transform 0.15s;
+    user-select: none;
+  }
+  .star-rating .star.active { color: var(--star); }
+  .star-rating .star:hover { transform: scale(1.15); }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    width: 100%;
+    padding: 0.75rem;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-sm {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+  .btn-edit { background: var(--accent); color: white; }
+  .btn-delete { background: var(--danger); color: white; }
+
+  /* Book List */
+  .book-list { margin-top: 1.5rem; }
+  .book-list h2 { margin-bottom: 0.75rem; }
+  .book-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .book-item:last-child { border-bottom: none; }
+  .book-info { flex: 1; min-width: 0; }
+  .book-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .book-meta {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2px;
+  }
+  .book-stars { color: var(--star); font-size: 0.8rem; letter-spacing: -1px; }
+  .book-actions { display: flex; gap: 0.4rem; flex-shrink: 0; margin-left: 0.75rem; }
+  .empty-state {
+    text-align: center;
+    color: var(--text-light);
+    padding: 2rem 0;
+    font-size: 0.9rem;
+  }
+
+  /* Dashboard */
+  .right-col { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.25rem;
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Goal */
+  .goal-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .goal-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .goal-input-row input {
+    width: 70px;
+    padding: 0.4rem 0.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  .goal-input-row input:focus { outline: none; border-color: var(--accent); }
+  .goal-input-row span { font-size: 0.85rem; color: var(--text-light); }
+
+  .progress-bar-outer {
+    width: 100%;
+    height: 24px;
+    background: #ede7e0;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--primary));
+    border-radius: 12px;
+    transition: width 0.5s ease;
+    min-width: 0;
+  }
+  .progress-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+    .stats-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 500px) {
+    .stats-row {
+      grid-template-columns: 1fr;
+    }
+    header { padding: 1rem; }
+    .layout { padding: 0 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Book Tracker 2026</h1>
+  <p>Track your reading journey throughout the year</p>
+</header>
+
+<div class="layout">
+  <!-- Left Column: Form + Book List -->
+  <div class="left-col">
+    <div class="card">
+      <h2>Add a Book</h2>
+      <form id="bookForm">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" id="title" placeholder="Book title" required>
+        </div>
+        <div class="form-group">
+          <label for="author">Author</label>
+          <input type="text" id="author" placeholder="Author name" required>
+        </div>
+        <div class="form-group">
+          <label for="dateFinished">Date Finished</label>
+          <input type="date" id="dateFinished" required>
+        </div>
+        <div class="form-group">
+          <label>Rating</label>
+          <div class="star-rating" id="starRating">
+            <span class="star" data-value="1">&#9733;</span>
+            <span class="star" data-value="2">&#9733;</span>
+            <span class="star" data-value="3">&#9733;</span>
+            <span class="star" data-value="4">&#9733;</span>
+            <span class="star" data-value="5">&#9733;</span>
+          </div>
+        </div>
+        <input type="hidden" id="editId" value="">
+        <button type="submit" class="btn btn-primary" id="submitBtn">Add Book</button>
+      </form>
+    </div>
+
+    <div class="card book-list">
+      <h2>My Books <span id="bookCount" style="font-weight:400;font-size:0.85rem;color:var(--text-light)"></span></h2>
+      <div id="bookListContainer">
+        <div class="empty-state">No books added yet. Start tracking!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Dashboard -->
+  <div class="right-col">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Books</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statAvgRating">-</div>
+        <div class="stat-label">Avg Rating</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statThisMonth">0</div>
+        <div class="stat-label">This Month</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Yearly Goal</h2>
+      <div class="goal-input-row">
+        <span>Goal:</span>
+        <input type="number" id="goalInput" min="1" max="365" value="24">
+        <span>books in 2026</span>
+      </div>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="goalBar" style="width:0%"></div>
+        <div class="progress-text" id="goalText">0 / 24</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <h2>Books per Month</h2>
+        <canvas id="monthChart"></canvas>
+      </div>
+      <div class="card">
+        <h2>Rating Distribution</h2>
+        <canvas id="ratingChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // --- Data Layer ---
+  const STORAGE_KEY = 'bookTracker2026';
+  const GOAL_KEY = 'bookTracker2026Goal';
+
+  function loadBooks() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+  function saveBooks(books) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  }
+  function loadGoal() {
+    return parseInt(localStorage.getItem(GOAL_KEY)) || 24;
+  }
+  function saveGoal(g) {
+    localStorage.setItem(GOAL_KEY, String(g));
+  }
+
+  let books = loadBooks();
+  let selectedRating = 0;
+  let editingId = '';
+
+  // --- DOM refs ---
+  const form = document.getElementById('bookForm');
+  const titleInput = document.getElementById('title');
+  const authorInput = document.getElementById('author');
+  const dateInput = document.getElementById('dateFinished');
+  const starRating = document.getElementById('starRating');
+  const stars = starRating.querySelectorAll('.star');
+  const editIdInput = document.getElementById('editId');
+  const submitBtn = document.getElementById('submitBtn');
+  const bookListContainer = document.getElementById('bookListContainer');
+  const bookCount = document.getElementById('bookCount');
+  const goalInput = document.getElementById('goalInput');
+  const goalBar = document.getElementById('goalBar');
+  const goalText = document.getElementById('goalText');
+
+  // --- Star Rating ---
+  function setStars(value) {
+    selectedRating = value;
+    stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.value) <= value));
+  }
+  starRating.addEventListener('click', e => {
+    const star = e.target.closest('.star');
+    if (star) setStars(parseInt(star.dataset.value));
+  });
+  starRating.addEventListener('mouseover', e => {
+    const star = e.target.closest('.star');
+    if (star) {
+      const val = parseInt(star.dataset.value);
+      stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.value) <= val));
+    }
+  });
+  starRating.addEventListener('mouseleave', () => {
+    stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.value) <= selectedRating));
+  });
+
+  // --- Form Submit ---
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!selectedRating) { alert('Please select a rating.'); return; }
+
+    const book = {
+      id: editingId || crypto.randomUUID(),
+      title: titleInput.value.trim(),
+      author: authorInput.value.trim(),
+      dateFinished: dateInput.value,
+      rating: selectedRating
+    };
+
+    if (editingId) {
+      const idx = books.findIndex(b => b.id === editingId);
+      if (idx !== -1) books[idx] = book;
+      editingId = '';
+      editIdInput.value = '';
+      submitBtn.textContent = 'Add Book';
+    } else {
+      books.push(book);
+    }
+
+    saveBooks(books);
+    form.reset();
+    setStars(0);
+    render();
+    titleInput.focus();
+  });
+
+  // --- Edit / Delete ---
+  function editBook(id) {
+    const book = books.find(b => b.id === id);
+    if (!book) return;
+    titleInput.value = book.title;
+    authorInput.value = book.author;
+    dateInput.value = book.dateFinished;
+    setStars(book.rating);
+    editingId = id;
+    editIdInput.value = id;
+    submitBtn.textContent = 'Update Book';
+    titleInput.focus();
+  }
+  function deleteBook(id) {
+    if (!confirm('Delete this book?')) return;
+    books = books.filter(b => b.id !== id);
+    saveBooks(books);
+    if (editingId === id) {
+      editingId = '';
+      editIdInput.value = '';
+      submitBtn.textContent = 'Add Book';
+      form.reset();
+      setStars(0);
+    }
+    render();
+  }
+  // Expose to onclick
+  window._editBook = editBook;
+  window._deleteBook = deleteBook;
+
+  // --- Goal ---
+  goalInput.value = loadGoal();
+  goalInput.addEventListener('change', () => {
+    let v = parseInt(goalInput.value) || 1;
+    if (v < 1) v = 1;
+    if (v > 365) v = 365;
+    goalInput.value = v;
+    saveGoal(v);
+    render();
+  });
+
+  // --- Render ---
+  function starsHTML(rating) {
+    return '<span class="book-stars">' + '&#9733;'.repeat(rating) + '<span style="color:var(--border)">' + '&#9733;'.repeat(5 - rating) + '</span></span>';
+  }
+
+  function renderBookList() {
+    if (books.length === 0) {
+      bookListContainer.innerHTML = '<div class="empty-state">No books added yet. Start tracking!</div>';
+      bookCount.textContent = '';
+      return;
+    }
+    const sorted = [...books].sort((a, b) => b.dateFinished.localeCompare(a.dateFinished));
+    bookCount.textContent = `(${books.length})`;
+    bookListContainer.innerHTML = sorted.map(b => `
+      <div class="book-item">
+        <div class="book-info">
+          <div class="book-title">${esc(b.title)}</div>
+          <div class="book-meta">
+            ${esc(b.author)} &middot; ${formatDate(b.dateFinished)} &middot; ${starsHTML(b.rating)}
+          </div>
+        </div>
+        <div class="book-actions">
+          <button class="btn btn-sm btn-edit" onclick="_editBook('${b.id}')">Edit</button>
+          <button class="btn btn-sm btn-delete" onclick="_deleteBook('${b.id}')">Del</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderStats() {
+    const total = books.length;
+    document.getElementById('statTotal').textContent = total;
+
+    if (total > 0) {
+      const avg = books.reduce((s, b) => s + b.rating, 0) / total;
+      document.getElementById('statAvgRating').textContent = avg.toFixed(1);
+    } else {
+      document.getElementById('statAvgRating').textContent = '-';
+    }
+
+    const now = new Date();
+    const thisMonth = books.filter(b => {
+      const d = new Date(b.dateFinished);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).length;
+    document.getElementById('statThisMonth').textContent = thisMonth;
+
+    // Goal
+    const goal = parseInt(goalInput.value) || 24;
+    const pct = Math.min(100, (total / goal) * 100);
+    goalBar.style.width = pct + '%';
+    goalText.textContent = `${total} / ${goal}`;
+  }
+
+  // --- Charts ---
+  let monthChart, ratingChart;
+
+  function renderCharts() {
+    const monthCounts = new Array(12).fill(0);
+    const ratingCounts = [0, 0, 0, 0, 0]; // index 0 = 1 star
+
+    books.forEach(b => {
+      const d = new Date(b.dateFinished);
+      if (d.getFullYear() === 2026) {
+        monthCounts[d.getMonth()]++;
+      }
+      ratingCounts[b.rating - 1]++;
+    });
+
+    const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    if (monthChart) {
+      monthChart.data.datasets[0].data = monthCounts;
+      monthChart.update();
+    } else {
+      monthChart = new Chart(document.getElementById('monthChart'), {
+        type: 'bar',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label: 'Books',
+            data: monthCounts,
+            backgroundColor: 'rgba(107,76,59,0.7)',
+            borderRadius: 6,
+            maxBarThickness: 40
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+    }
+
+    const ratingColors = ['#e74c3c','#e67e22','#f0b429','#27ae60','#2980b9'];
+    if (ratingChart) {
+      ratingChart.data.datasets[0].data = ratingCounts;
+      ratingChart.update();
+    } else {
+      ratingChart = new Chart(document.getElementById('ratingChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['1 Star','2 Stars','3 Stars','4 Stars','5 Stars'],
+          datasets: [{
+            data: ratingCounts,
+            backgroundColor: ratingColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 14, padding: 12 } }
+          }
+        }
+      });
+    }
+  }
+
+  function render() {
+    renderBookList();
+    renderStats();
+    renderCharts();
+  }
+
+  // --- Helpers ---
+  function esc(str) {
+    const el = document.createElement('span');
+    el.textContent = str;
+    return el.innerHTML;
+  }
+  function formatDate(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // --- Init ---
+  dateInput.value = new Date().toISOString().split('T')[0];
+  render();
+})();
+</script>
+
+</body>
+</html>
