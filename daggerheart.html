@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daggerheart Character Tracker</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1225;
+  --bg-light: #241a33;
+  --card: #2a1f3d;
+  --card-hover: #332649;
+  --primary: #c9a84c;
+  --primary-dim: #a68a3a;
+  --accent: #7b5ea7;
+  --accent-light: #9b7ec7;
+  --text: #e8e0f0;
+  --text-dim: #a89bb8;
+  --text-dark: #6b5f7a;
+  --border: #3d2f55;
+  --danger: #c0392b;
+  --danger-light: #e74c3c;
+  --success: #27ae60;
+  --hp-fill: #c0392b;
+  --stress-fill: #7b5ea7;
+  --armor-fill: #c9a84c;
+  --hope-fill: #f0c040;
+  --fear-fill: #5a3e7a;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --slot-size: 32px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Header */
+header {
+  background: linear-gradient(135deg, #1f1535 0%, #2d1a4a 50%, #1f1535 100%);
+  border-bottom: 2px solid var(--primary);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.char-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.char-controls select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  min-width: 180px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: var(--card-hover); border-color: var(--primary-dim); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-light); }
+.btn-danger { border-color: var(--danger); color: var(--danger-light); }
+.btn-danger:hover { background: rgba(192,57,43,0.15); }
+.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+
+/* Layout */
+.sheet {
+  max-width: 1200px;
+  margin: 1rem auto;
+  padding: 0 1rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.full-width { grid-column: 1 / -1; }
+
+/* Cards / Sections */
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.section-header h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.section-header .chevron {
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  font-size: 0.8rem;
+}
+.section.collapsed .section-header .chevron { transform: rotate(-90deg); }
+.section.collapsed .section-body { display: none; }
+.section-body { padding: 1rem; }
+
+/* Form inputs */
+input[type="text"], input[type="number"], textarea, select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+input[type="number"] { width: 70px; text-align: center; }
+textarea { resize: vertical; min-height: 80px; }
+label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+}
+
+/* Identity grid */
+.identity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+.identity-grid .field-group { display: flex; flex-direction: column; }
+
+/* Traits */
+.traits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+.trait-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem;
+}
+.trait-block .trait-name {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 0.3rem;
+}
+.trait-block .trait-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 2.5rem;
+  text-align: center;
+}
+.trait-controls {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+.trait-controls button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.trait-controls button:hover { background: var(--card-hover); border-color: var(--primary-dim); }
+
+/* Combat stats */
+.combat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+.combat-row:last-child { margin-bottom: 0; }
+.combat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  min-width: 100px;
+}
+.combat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Slot trackers */
+.slots {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.slot {
+  width: var(--slot-size);
+  height: var(--slot-size);
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.slot:hover { border-color: var(--text-dim); }
+.slot.filled-hp { background: var(--hp-fill); border-color: var(--hp-fill); }
+.slot.filled-stress { background: var(--stress-fill); border-color: var(--stress-fill); }
+.slot.filled-armor { background: var(--armor-fill); border-color: var(--armor-fill); }
+.slot-config {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+}
+.slot-config label { margin-bottom: 0; font-size: 0.7rem; }
+.slot-config input[type="number"] { width: 50px; padding: 0.2rem 0.4rem; font-size: 0.8rem; }
+
+/* Thresholds */
+.thresholds-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.threshold-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.threshold-item label { font-size: 0.7rem; }
+.threshold-item input[type="number"] { width: 60px; }
+
+/* Hope / Fear */
+.hope-fear-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.counter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.counter-group .counter-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  min-width: 50px;
+}
+.counter-group .counter-label.hope { color: var(--hope-fill); }
+.counter-group .counter-label.fear { color: var(--accent); }
+.counter-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 2rem;
+  text-align: center;
+}
+.counter-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.counter-btn:hover { background: var(--card-hover); border-color: var(--primary-dim); }
+
+/* List items (weapons, experiences, domain cards, inventory) */
+.list-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+.list-item:last-child { margin-bottom: 0; }
+.list-item .list-fields { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
+.list-item .list-fields .row { display: flex; gap: 0.4rem; align-items: center; }
+.list-item .list-fields input { font-size: 0.85rem; }
+.list-item .list-fields .small-input { width: 60px; flex-shrink: 0; }
+.list-item .remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-dark);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.list-item .remove-btn:hover { color: var(--danger-light); }
+.add-row {
+  margin-top: 0.5rem;
+}
+
+/* Domain card groups */
+.domain-group { margin-bottom: 1rem; }
+.domain-group:last-child { margin-bottom: 0; }
+.domain-group-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-light);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.move-btn {
+  background: none;
+  border: none;
+  color: var(--accent-light);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.3rem;
+  text-decoration: underline;
+}
+.move-btn:hover { color: var(--primary); }
+
+/* Notes */
+.notes-area { width: 100%; min-height: 150px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sheet { grid-template-columns: 1fr; }
+  .traits-grid { grid-template-columns: repeat(2, 1fr); }
+  .identity-grid { grid-template-columns: 1fr 1fr; }
+  header { flex-direction: column; text-align: center; }
+}
+@media (max-width: 480px) {
+  .traits-grid { grid-template-columns: 1fr 1fr; }
+  .identity-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Daggerheart</h1>
+  <div class="char-controls">
+    <select id="charSelect"></select>
+    <button class="btn btn-primary" onclick="newCharacter()">+ New</button>
+    <button class="btn btn-danger" onclick="deleteCharacter()">Delete</button>
+  </div>
+</header>
+
+<div class="sheet" id="sheet">
+
+  <!-- Identity -->
+  <div class="section full-width" data-section="identity">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Character Identity</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="identity-grid">
+        <div class="field-group">
+          <label>Name</label>
+          <input type="text" data-field="name" placeholder="Character name">
+        </div>
+        <div class="field-group">
+          <label>Pronouns</label>
+          <input type="text" data-field="pronouns" placeholder="they/them">
+        </div>
+        <div class="field-group">
+          <label>Level</label>
+          <input type="number" data-field="level" min="1" max="10" value="1" style="width:100%">
+        </div>
+        <div class="field-group">
+          <label>Tier</label>
+          <input type="text" id="tierDisplay" readonly style="color:var(--primary);font-weight:600">
+        </div>
+        <div class="field-group">
+          <label>Proficiency</label>
+          <input type="text" id="profDisplay" readonly style="color:var(--primary);font-weight:600">
+        </div>
+        <div class="field-group">
+          <label>Ancestry</label>
+          <input type="text" data-field="ancestry" placeholder="Ancestry">
+        </div>
+        <div class="field-group">
+          <label>Community</label>
+          <input type="text" data-field="community" placeholder="Community">
+        </div>
+        <div class="field-group">
+          <label>Class</label>
+          <input type="text" data-field="class" placeholder="Class">
+        </div>
+        <div class="field-group">
+          <label>Subclass</label>
+          <input type="text" data-field="subclass" placeholder="Subclass">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Traits -->
+  <div class="section" data-section="traits">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Traits</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="traits-grid" id="traitsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Combat Stats -->
+  <div class="section" data-section="combat">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Combat Stats</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="combat-row">
+        <span class="combat-label">Evasion</span>
+        <input type="number" data-field="evasion" value="10" style="width:70px">
+      </div>
+      <div class="combat-row">
+        <span class="combat-label">Hit Points</span>
+        <div class="slots" id="hpSlots"></div>
+        <div class="slot-config">
+          <label>Max</label>
+          <input type="number" id="hpMaxInput" min="1" max="20" value="6">
+        </div>
+      </div>
+      <div class="combat-row">
+        <span class="combat-label">Stress</span>
+        <div class="slots" id="stressSlots"></div>
+        <div class="slot-config">
+          <label>Max</label>
+          <input type="number" id="stressMaxInput" min="1" max="20" value="6">
+        </div>
+      </div>
+      <div class="combat-row">
+        <span class="combat-label">Armor Score</span>
+        <input type="number" data-field="armorScore" value="0" style="width:70px">
+      </div>
+      <div class="combat-row">
+        <span class="combat-label">Armor Slots</span>
+        <div class="slots" id="armorSlots"></div>
+        <div class="slot-config">
+          <label>Max</label>
+          <input type="number" id="armorSlotsInput" min="0" max="12" value="0">
+        </div>
+      </div>
+      <div class="combat-row">
+        <span class="combat-label">Damage Thresholds</span>
+        <div class="thresholds-row">
+          <div class="threshold-item">
+            <label>Minor</label>
+            <input type="number" data-field="thresholds.minor" value="0">
+          </div>
+          <div class="threshold-item">
+            <label>Major</label>
+            <input type="number" data-field="thresholds.major" value="0">
+          </div>
+          <div class="threshold-item">
+            <label>Severe</label>
+            <input type="number" data-field="thresholds.severe" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hope & Fear -->
+  <div class="section" data-section="hopefear">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Hope & Fear</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="hope-fear-row">
+        <div class="counter-group">
+          <span class="counter-label hope">Hope</span>
+          <button class="counter-btn" onclick="adjustCounter('hope',-1)">-</button>
+          <span class="counter-value" id="hopeValue">0</span>
+          <button class="counter-btn" onclick="adjustCounter('hope',1)">+</button>
+        </div>
+        <div class="counter-group">
+          <span class="counter-label fear">Fear</span>
+          <button class="counter-btn" onclick="adjustCounter('fear',-1)">-</button>
+          <span class="counter-value" id="fearValue">0</span>
+          <button class="counter-btn" onclick="adjustCounter('fear',1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weapons & Equipment -->
+  <div class="section" data-section="weapons">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Weapons & Equipment</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div id="weaponsList"></div>
+      <div class="add-row">
+        <button class="btn btn-sm" onclick="addWeapon()">+ Add Weapon / Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Armor -->
+  <div class="section" data-section="activearmor">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Active Armor</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <div class="field-group" style="flex:2;min-width:120px">
+          <label>Armor Name</label>
+          <input type="text" data-field="armor.name" placeholder="Armor name">
+        </div>
+        <div class="field-group" style="flex:1;min-width:70px">
+          <label>Score</label>
+          <input type="number" data-field="armor.score" value="0">
+        </div>
+        <div class="field-group" style="flex:2;min-width:120px">
+          <label>Thresholds / Properties</label>
+          <input type="text" data-field="armor.thresholds" placeholder="e.g. Minor 3 / Major 7">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Experiences -->
+  <div class="section" data-section="experiences">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Experiences</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div id="experiencesList"></div>
+      <div class="add-row">
+        <button class="btn btn-sm" onclick="addExperience()">+ Add Experience</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Domain Cards -->
+  <div class="section" data-section="domain">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Domain Cards</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="domain-group">
+        <div class="domain-group-title">Loadout</div>
+        <div id="loadoutList"></div>
+        <div class="add-row">
+          <button class="btn btn-sm" onclick="addDomainCard('loadout')">+ Add to Loadout</button>
+        </div>
+      </div>
+      <div class="domain-group">
+        <div class="domain-group-title">Vault</div>
+        <div id="vaultList"></div>
+        <div class="add-row">
+          <button class="btn btn-sm" onclick="addDomainCard('vault')">+ Add to Vault</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="section full-width" data-section="notes">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Notes</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <textarea class="notes-area" data-field="notes" placeholder="Backstory, motivations, session notes..."></textarea>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'daggerheart_characters';
+const TRAITS = ['agility','strength','finesse','instinct','presence','knowledge'];
+
+function uuid() {
+  return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function defaultChar() {
+  return {
+    id: uuid(),
+    name: 'New Character', pronouns: '', level: 1,
+    ancestry: '', community: '', class: '', subclass: '',
+    traits: { agility:0, strength:0, finesse:0, instinct:0, presence:0, knowledge:0 },
+    evasion: 10, hpMax: 6, hpMarked: 0,
+    stressMax: 6, stressMarked: 0,
+    armorScore: 0, armorSlots: 0, armorMarked: 0,
+    thresholds: { minor:0, major:0, severe:0 },
+    hope: 0, fear: 0,
+    weapons: [],
+    armor: { name:'', score:0, thresholds:'' },
+    experiences: [],
+    domainCards: [],
+    notes: ''
+  };
+}
+
+function loadAll() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveAll(chars) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(chars));
+}
+
+let characters = loadAll();
+let currentId = null;
+
+function current() {
+  return characters.find(c => c.id === currentId);
+}
+
+function save() {
+  saveAll(characters);
+}
+
+// --- Tier & Proficiency ---
+function tierFromLevel(lvl) {
+  if (lvl <= 3) return 1;
+  if (lvl <= 6) return 2;
+  if (lvl <= 9) return 3;
+  return 4;
+}
+function profFromLevel(lvl) {
+  return '+' + (Math.floor((lvl - 1) / 2) + 1);
+}
+
+function updateDerived() {
+  const c = current(); if (!c) return;
+  const lvl = c.level || 1;
+  document.getElementById('tierDisplay').value = 'Tier ' + tierFromLevel(lvl);
+  document.getElementById('profDisplay').value = profFromLevel(lvl);
+}
+
+// --- Character selector ---
+function populateSelect() {
+  const sel = document.getElementById('charSelect');
+  sel.innerHTML = '';
+  characters.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name || 'Unnamed';
+    sel.appendChild(opt);
+  });
+  if (currentId) sel.value = currentId;
+}
+
+function switchCharacter(id) {
+  currentId = id;
+  loadCharacterUI();
+}
+
+function newCharacter() {
+  const c = defaultChar();
+  characters.push(c);
+  currentId = c.id;
+  save();
+  populateSelect();
+  loadCharacterUI();
+}
+
+function deleteCharacter() {
+  if (characters.length <= 1) return;
+  if (!confirm('Delete this character?')) return;
+  characters = characters.filter(c => c.id !== currentId);
+  currentId = characters[0].id;
+  save();
+  populateSelect();
+  loadCharacterUI();
+}
+
+// --- Slot renderers ---
+function renderSlots(containerId, max, marked, fillClass, onToggle) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  for (let i = 0; i < max; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot' + (i < marked ? ' ' + fillClass : '');
+    slot.onclick = () => onToggle(i);
+    el.appendChild(slot);
+  }
+}
+
+function toggleHP(i) {
+  const c = current(); if (!c) return;
+  c.hpMarked = (i < c.hpMarked) ? i : i + 1;
+  save();
+  renderSlots('hpSlots', c.hpMax, c.hpMarked, 'filled-hp', toggleHP);
+}
+
+function toggleStress(i) {
+  const c = current(); if (!c) return;
+  c.stressMarked = (i < c.stressMarked) ? i : i + 1;
+  save();
+  renderSlots('stressSlots', c.stressMax, c.stressMarked, 'filled-stress', toggleStress);
+}
+
+function toggleArmor(i) {
+  const c = current(); if (!c) return;
+  c.armorMarked = (i < c.armorMarked) ? i : i + 1;
+  save();
+  renderSlots('armorSlots', c.armorSlots, c.armorMarked, 'filled-armor', toggleArmor);
+}
+
+// --- Traits ---
+function renderTraits() {
+  const c = current(); if (!c) return;
+  const grid = document.getElementById('traitsGrid');
+  grid.innerHTML = '';
+  TRAITS.forEach(t => {
+    const val = c.traits[t] || 0;
+    const block = document.createElement('div');
+    block.className = 'trait-block';
+    block.innerHTML = `
+      <span class="trait-name">${t}</span>
+      <span class="trait-value">${val >= 0 ? '+' + val : val}</span>
+      <div class="trait-controls">
+        <button onclick="adjustTrait('${t}',-1)">-</button>
+        <button onclick="adjustTrait('${t}',1)">+</button>
+      </div>`;
+    grid.appendChild(block);
+  });
+}
+
+function adjustTrait(t, delta) {
+  const c = current(); if (!c) return;
+  c.traits[t] = Math.max(-3, Math.min(3, (c.traits[t] || 0) + delta));
+  save();
+  renderTraits();
+}
+
+// --- Counters ---
+function adjustCounter(field, delta) {
+  const c = current(); if (!c) return;
+  c[field] = Math.max(0, (c[field] || 0) + delta);
+  save();
+  document.getElementById(field + 'Value').textContent = c[field];
+}
+
+// --- Weapons ---
+function renderWeapons() {
+  const c = current(); if (!c) return;
+  const el = document.getElementById('weaponsList');
+  el.innerHTML = '';
+  c.weapons.forEach((w, i) => {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.innerHTML = `
+      <div class="list-fields">
+        <div class="row">
+          <select onchange="updateWeapon(${i},'slot',this.value)" style="width:100px;flex-shrink:0">
+            <option value="primary" ${w.slot==='primary'?'selected':''}>Primary</option>
+            <option value="secondary" ${w.slot==='secondary'?'selected':''}>Secondary</option>
+            <option value="inventory" ${w.slot==='inventory'?'selected':''}>Inventory</option>
+          </select>
+          <input type="text" value="${esc(w.name)}" placeholder="Name" oninput="updateWeapon(${i},'name',this.value)">
+        </div>
+        <input type="text" value="${esc(w.description)}" placeholder="Properties / description" oninput="updateWeapon(${i},'description',this.value)">
+      </div>
+      <button class="remove-btn" onclick="removeWeapon(${i})">&times;</button>`;
+    el.appendChild(item);
+  });
+}
+
+function addWeapon() {
+  const c = current(); if (!c) return;
+  c.weapons.push({ name:'', description:'', slot:'primary' });
+  save(); renderWeapons();
+}
+function removeWeapon(i) {
+  const c = current(); if (!c) return;
+  c.weapons.splice(i, 1);
+  save(); renderWeapons();
+}
+function updateWeapon(i, key, val) {
+  const c = current(); if (!c) return;
+  c.weapons[i][key] = val;
+  save();
+}
+
+// --- Experiences ---
+function renderExperiences() {
+  const c = current(); if (!c) return;
+  const el = document.getElementById('experiencesList');
+  el.innerHTML = '';
+  c.experiences.forEach((e, i) => {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.innerHTML = `
+      <div class="list-fields">
+        <div class="row">
+          <input type="text" value="${esc(e.name)}" placeholder="Experience tag" oninput="updateExperience(${i},'name',this.value)">
+          <input type="number" class="small-input" value="${e.value}" min="0" oninput="updateExperience(${i},'value',+this.value)">
+        </div>
+      </div>
+      <button class="remove-btn" onclick="removeExperience(${i})">&times;</button>`;
+    el.appendChild(item);
+  });
+}
+
+function addExperience() {
+  const c = current(); if (!c) return;
+  c.experiences.push({ name:'', value:2 });
+  save(); renderExperiences();
+}
+function removeExperience(i) {
+  const c = current(); if (!c) return;
+  c.experiences.splice(i, 1);
+  save(); renderExperiences();
+}
+function updateExperience(i, key, val) {
+  const c = current(); if (!c) return;
+  c.experiences[i][key] = val;
+  save();
+}
+
+// --- Domain Cards ---
+function renderDomainCards() {
+  const c = current(); if (!c) return;
+  ['loadout','vault'].forEach(loc => {
+    const el = document.getElementById(loc + 'List');
+    el.innerHTML = '';
+    c.domainCards.forEach((d, i) => {
+      if (d.location !== loc) return;
+      const other = loc === 'loadout' ? 'vault' : 'loadout';
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.innerHTML = `
+        <div class="list-fields">
+          <input type="text" value="${esc(d.name)}" placeholder="Card name" oninput="updateDomainCard(${i},'name',this.value)">
+          <input type="text" value="${esc(d.description)}" placeholder="Description / effect" oninput="updateDomainCard(${i},'description',this.value)">
+          <button class="move-btn" onclick="moveDomainCard(${i},'${other}')">Move to ${other}</button>
+        </div>
+        <button class="remove-btn" onclick="removeDomainCard(${i})">&times;</button>`;
+      el.appendChild(item);
+    });
+  });
+}
+
+function addDomainCard(location) {
+  const c = current(); if (!c) return;
+  c.domainCards.push({ name:'', description:'', location });
+  save(); renderDomainCards();
+}
+function removeDomainCard(i) {
+  const c = current(); if (!c) return;
+  c.domainCards.splice(i, 1);
+  save(); renderDomainCards();
+}
+function updateDomainCard(i, key, val) {
+  const c = current(); if (!c) return;
+  c.domainCards[i][key] = val;
+  save();
+}
+function moveDomainCard(i, to) {
+  const c = current(); if (!c) return;
+  c.domainCards[i].location = to;
+  save(); renderDomainCards();
+}
+
+// --- Generic field binding ---
+function setNestedField(obj, path, val) {
+  const parts = path.split('.');
+  let cur = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    cur = cur[parts[i]];
+  }
+  cur[parts[parts.length - 1]] = val;
+}
+
+function getNestedField(obj, path) {
+  return path.split('.').reduce((o, k) => (o || {})[k], obj);
+}
+
+function bindFields() {
+  const c = current(); if (!c) return;
+  document.querySelectorAll('[data-field]').forEach(el => {
+    const field = el.dataset.field;
+    const val = getNestedField(c, field);
+    if (el.type === 'number') el.value = val ?? '';
+    else el.value = val ?? '';
+
+    el.oninput = () => {
+      const v = el.type === 'number' ? (el.value === '' ? 0 : +el.value) : el.value;
+      setNestedField(c, field, v);
+      if (field === 'name') {
+        populateSelect();
+        document.getElementById('charSelect').value = currentId;
+      }
+      if (field === 'level') updateDerived();
+      save();
+    };
+  });
+}
+
+// --- Slot max config ---
+function bindSlotConfig() {
+  const c = current(); if (!c) return;
+
+  const hpMax = document.getElementById('hpMaxInput');
+  hpMax.value = c.hpMax;
+  hpMax.oninput = () => {
+    c.hpMax = Math.max(1, +hpMax.value || 1);
+    c.hpMarked = Math.min(c.hpMarked, c.hpMax);
+    save();
+    renderSlots('hpSlots', c.hpMax, c.hpMarked, 'filled-hp', toggleHP);
+  };
+
+  const stressMax = document.getElementById('stressMaxInput');
+  stressMax.value = c.stressMax;
+  stressMax.oninput = () => {
+    c.stressMax = Math.max(1, +stressMax.value || 1);
+    c.stressMarked = Math.min(c.stressMarked, c.stressMax);
+    save();
+    renderSlots('stressSlots', c.stressMax, c.stressMarked, 'filled-stress', toggleStress);
+  };
+
+  const armorMax = document.getElementById('armorSlotsInput');
+  armorMax.value = c.armorSlots;
+  armorMax.oninput = () => {
+    c.armorSlots = Math.max(0, +armorMax.value || 0);
+    c.armorMarked = Math.min(c.armorMarked, c.armorSlots);
+    save();
+    renderSlots('armorSlots', c.armorSlots, c.armorMarked, 'filled-armor', toggleArmor);
+  };
+}
+
+// --- Section collapse ---
+function toggleSection(headerEl) {
+  headerEl.closest('.section').classList.toggle('collapsed');
+}
+
+// --- Escape HTML ---
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// --- Load full UI for current char ---
+function loadCharacterUI() {
+  const c = current(); if (!c) return;
+  bindFields();
+  bindSlotConfig();
+  updateDerived();
+  renderTraits();
+  renderSlots('hpSlots', c.hpMax, c.hpMarked, 'filled-hp', toggleHP);
+  renderSlots('stressSlots', c.stressMax, c.stressMarked, 'filled-stress', toggleStress);
+  renderSlots('armorSlots', c.armorSlots, c.armorMarked, 'filled-armor', toggleArmor);
+  document.getElementById('hopeValue').textContent = c.hope;
+  document.getElementById('fearValue').textContent = c.fear;
+  renderWeapons();
+  renderExperiences();
+  renderDomainCards();
+}
+
+// --- Init ---
+document.getElementById('charSelect').addEventListener('change', function() {
+  switchCharacter(this.value);
+});
+
+if (characters.length === 0) {
+  newCharacter();
+} else {
+  currentId = characters[0].id;
+  populateSelect();
+  loadCharacterUI();
+}
+</script>
+</body>
+</html>
