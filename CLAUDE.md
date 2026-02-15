@@ -17,6 +17,7 @@ This is a collection of standalone, single-file HTML web applications. Each app 
 
 - `index.html` — Book Tracker 2026: reading log with charts (uses Chart.js via CDN)
 - `daggerheart.html` — Daggerheart TTRPG character sheet tracker with multi-character support
+- `sensitivity.html` — Financial model sensitivity analysis: upload Excel, auto-detect inputs/outputs, run tornado & scenario grid analysis (uses SheetJS, HyperFormula, Chart.js via CDN)
 
 ## Development
 

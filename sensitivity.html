@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Model Sensitivity Analysis</title>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hyperformula/dist/hyperformula.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --primary: #1a5276;
+  --primary-light: #2980b9;
+  --accent: #27ae60;
+  --text: #2c3e50;
+  --text-light: #7f8c8d;
+  --border: #dce1e6;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --input-bg: #eafaf1;
+  --formula-bg: #eaf2f8;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 1.25rem 2rem;
+  text-align: center;
+}
+header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+header p { opacity: 0.85; font-size: 0.9rem; margin-top: 0.2rem; }
+
+.container {
+  max-width: 1200px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.card h2 {
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-accent { background: var(--accent); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+
+/* Upload */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--primary-light);
+  background: var(--formula-bg);
+}
+.upload-zone input { display: none; }
+.upload-zone p { color: var(--text-light); margin-top: 0.5rem; font-size: 0.9rem; }
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--input-bg);
+  border-radius: var(--radius-sm);
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+.file-info .name { font-weight: 600; }
+.file-info .meta { color: var(--text-light); font-size: 0.8rem; }
+
+/* Sheet tabs */
+.sheet-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+.sheet-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-light);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+}
+.sheet-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Grid */
+.grid-wrap {
+  overflow: auto;
+  max-height: 350px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.grid-wrap table {
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.grid-wrap th, .grid-wrap td {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.5rem;
+  min-width: 80px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.grid-wrap th {
+  background: #f7f8fa;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.grid-wrap td.cell-input { background: var(--input-bg); }
+.grid-wrap td.cell-formula { background: var(--formula-bg); }
+
+.cell-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+.cell-stats span { display: flex; align-items: center; gap: 0.3rem; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot-input { background: #27ae60; }
+.dot-formula { background: #2980b9; }
+
+/* Config */
+.config-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.config-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.config-list h3 {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  background: #f7f8fa;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+.config-item:last-child { border-bottom: none; }
+.config-item label { cursor: pointer; flex: 1; }
+.config-item .addr { color: var(--text-light); font-size: 0.75rem; margin-left: 0.25rem; }
+
+/* Range config */
+.range-configs {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.range-row {
+  display: grid;
+  grid-template-columns: 180px repeat(3, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.5rem;
+  background: #fafbfc;
+  border-radius: var(--radius-sm);
+}
+.range-row .label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.range-row input {
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.action-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Results tabs */
+.result-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1rem;
+}
+.result-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-light);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.result-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+.result-panel { display: none; }
+.result-panel.active { display: block; }
+
+/* Sensitivity table */
+.sens-table-wrap {
+  overflow: auto;
+  max-height: 500px;
+}
+.sens-table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: 100%;
+}
+.sens-table th, .sens-table td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: center;
+}
+.sens-table th {
+  background: #f7f8fa;
+  position: sticky;
+  top: 0;
+  font-weight: 600;
+}
+.sens-table td.heatmap-cell {
+  font-weight: 500;
+}
+
+/* Chart containers */
+.chart-box {
+  max-width: 100%;
+  margin-bottom: 1.5rem;
+}
+.chart-box canvas {
+  max-height: 400px;
+}
+.chart-box h3 {
+  font-size: 0.9rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.hidden { display: none !important; }
+.status-msg {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+.status-msg.info { background: var(--formula-bg); color: var(--primary); }
+.status-msg.error { background: #fdecea; color: var(--danger); }
+
+@media (max-width: 768px) {
+  .config-columns { grid-template-columns: 1fr; }
+  .range-row { grid-template-columns: 1fr 1fr 1fr; }
+  .range-row .label { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sensitivity Analysis</h1>
+  <p>Upload a financial model and explore how inputs drive outputs</p>
+</header>
+
+<div class="container">
+  <!-- Upload -->
+  <div class="card" id="upload-card">
+    <h2>Upload Model</h2>
+    <div class="upload-zone" id="upload-zone">
+      <strong>Drop .xlsx file here or click to browse</strong>
+      <p>Supports Excel files with formulas</p>
+      <input type="file" id="file-input" accept=".xlsx,.xls">
+    </div>
+    <div class="file-info hidden" id="file-info">
+      <div>
+        <span class="name" id="file-name"></span>
+        <span class="meta" id="file-meta"></span>
+      </div>
+      <button class="btn btn-danger btn-sm" id="clear-btn">Clear</button>
+    </div>
+  </div>
+
+  <!-- Model Overview -->
+  <div class="card hidden" id="overview-card">
+    <h2>Model Overview</h2>
+    <div class="sheet-tabs" id="sheet-tabs"></div>
+    <div class="grid-wrap" id="grid-wrap">
+      <table id="grid-table"></table>
+    </div>
+    <div class="cell-stats" id="cell-stats">
+      <span><span class="dot dot-input"></span> <span id="stat-inputs">0</span> input cells</span>
+      <span><span class="dot dot-formula"></span> <span id="stat-formulas">0</span> formula cells</span>
+    </div>
+  </div>
+
+  <!-- Configure Analysis -->
+  <div class="card hidden" id="config-card">
+    <h2>Configure Analysis</h2>
+    <div class="config-columns">
+      <div class="config-list" id="input-list">
+        <h3>Input Variables (numeric cells)</h3>
+      </div>
+      <div class="config-list" id="output-list">
+        <h3>Output Formulas</h3>
+      </div>
+    </div>
+    <div class="range-configs hidden" id="range-configs">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem;">
+        <strong style="font-size:0.85rem;">Input Ranges</strong>
+      </div>
+      <div class="range-row" style="background:none;font-weight:600;font-size:0.78rem;color:var(--text-light);">
+        <div>Variable</div>
+        <div style="text-align:right;">Min</div>
+        <div style="text-align:right;">Max</div>
+        <div style="text-align:right;">Steps</div>
+      </div>
+      <div id="range-rows"></div>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="run-tornado-btn" disabled>Run Tornado Analysis</button>
+      <button class="btn btn-accent" id="run-grid-btn" disabled>Run Scenario Grid</button>
+    </div>
+    <div id="config-status"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="card hidden" id="results-card">
+    <h2>Results</h2>
+    <div class="result-tabs" id="result-tabs">
+      <button class="result-tab active" data-panel="tornado-panel">Tornado</button>
+      <button class="result-tab" data-panel="table-panel">Sensitivity Table</button>
+      <button class="result-tab" data-panel="line-panel">Line Charts</button>
+    </div>
+    <div class="result-panel active" id="tornado-panel">
+      <div class="chart-box" id="tornado-box">
+        <canvas id="tornado-chart"></canvas>
+      </div>
+    </div>
+    <div class="result-panel" id="table-panel">
+      <div class="sens-table-wrap" id="table-wrap"></div>
+    </div>
+    <div class="result-panel" id="line-panel">
+      <div id="line-charts-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const STORAGE_KEY = 'sensitivityAnalysisConfig';
+
+  // State
+  let workbook = null;
+  let hf = null;
+  let fileName = '';
+  let sheetNames = [];
+  let currentSheet = 0;
+  let detectedInputs = []; // { sheet, row, col, addr, label, value, isPercent }
+  let detectedOutputs = []; // { sheet, row, col, addr, label, value }
+  let selectedInputs = new Set();
+  let selectedOutputs = new Set();
+  let inputRanges = {}; // addr -> { min, max, steps }
+  let charts = { tornado: null, lines: [] };
+
+  // DOM refs
+  const uploadZone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+  const fileInfo = document.getElementById('file-info');
+  const fileNameEl = document.getElementById('file-name');
+  const fileMetaEl = document.getElementById('file-meta');
+  const clearBtn = document.getElementById('clear-btn');
+  const overviewCard = document.getElementById('overview-card');
+  const sheetTabsEl = document.getElementById('sheet-tabs');
+  const gridTable = document.getElementById('grid-table');
+  const configCard = document.getElementById('config-card');
+  const inputListEl = document.getElementById('input-list');
+  const outputListEl = document.getElementById('output-list');
+  const rangeConfigsEl = document.getElementById('range-configs');
+  const rangeRowsEl = document.getElementById('range-rows');
+  const tornadoBtn = document.getElementById('run-tornado-btn');
+  const gridBtn = document.getElementById('run-grid-btn');
+  const resultsCard = document.getElementById('results-card');
+  const configStatus = document.getElementById('config-status');
+
+  // Column letter helper
+  function colLetter(c) {
+    let s = '';
+    c++;
+    while (c > 0) { c--; s = String.fromCharCode(65 + (c % 26)) + s; c = Math.floor(c / 26); }
+    return s;
+  }
+
+  function cellAddr(sheetName, r, c) {
+    return sheetName + '!' + colLetter(c) + (r + 1);
+  }
+
+  function shortAddr(r, c) {
+    return colLetter(c) + (r + 1);
+  }
+
+  // Upload handlers
+  uploadZone.addEventListener('click', () => fileInput.click());
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+  clearBtn.addEventListener('click', clearModel);
+
+  function handleFile(file) {
+    if (!file.name.match(/\.xlsx?$/i)) {
+      showStatus(configStatus, 'Please upload an .xlsx or .xls file.', 'error');
+      return;
+    }
+    fileName = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        parseWorkbook(e.target.result);
+        fileNameEl.textContent = fileName;
+        fileMetaEl.textContent = ` \u2014 ${sheetNames.length} sheet(s)`;
+        fileInfo.classList.remove('hidden');
+        uploadZone.classList.add('hidden');
+        overviewCard.classList.remove('hidden');
+        configCard.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        restoreConfig();
+      } catch (err) {
+        showStatus(configStatus, 'Error parsing file: ' + err.message, 'error');
+        console.error(err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function clearModel() {
+    workbook = null;
+    if (hf) { hf.destroy(); hf = null; }
+    fileName = '';
+    sheetNames = [];
+    detectedInputs = [];
+    detectedOutputs = [];
+    selectedInputs.clear();
+    selectedOutputs.clear();
+    inputRanges = {};
+    destroyCharts();
+    fileInfo.classList.add('hidden');
+    uploadZone.classList.remove('hidden');
+    overviewCard.classList.add('hidden');
+    configCard.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    fileInput.value = '';
+  }
+
+  function parseWorkbook(data) {
+    workbook = XLSX.read(data, { cellFormula: true, cellStyles: true, cellNF: true });
+    sheetNames = workbook.SheetNames;
+
+    // Build HyperFormula sheets
+    const sheetsData = {};
+    const sheetCellMeta = {}; // track cell types per sheet
+
+    for (const name of sheetNames) {
+      const ws = workbook.Sheets[name];
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      const rows = [];
+      const meta = [];
+
+      for (let r = range.s.r; r <= range.e.r; r++) {
+        const row = [];
+        const metaRow = [];
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r, c });
+          const cell = ws[cellRef];
+          if (!cell) {
+            row.push(null);
+            metaRow.push(null);
+          } else if (cell.f) {
+            row.push('=' + cell.f);
+            metaRow.push({ type: 'formula', format: cell.z });
+          } else {
+            row.push(cell.v !== undefined ? cell.v : null);
+            metaRow.push({ type: cell.t, format: cell.z, value: cell.v });
+          }
+        }
+        rows.push(row);
+        meta.push(metaRow);
+      }
+      sheetsData[name] = rows;
+      sheetCellMeta[name] = meta;
+    }
+
+    // Build HyperFormula
+    if (hf) hf.destroy();
+    hf = HyperFormula.buildFromSheets(sheetsData, { licenseKey: 'gpl-v3' });
+
+    // Bridge named ranges
+    if (workbook.Workbook && workbook.Workbook.Names) {
+      for (const n of workbook.Workbook.Names) {
+        try {
+          if (n.Name && n.Ref) hf.addNamedExpression(n.Name, n.Ref);
+        } catch (e) { /* skip invalid */ }
+      }
+    }
+
+    // Detect inputs and outputs
+    detectCells(sheetCellMeta);
+    renderSheetTabs();
+    renderGrid(0);
+    renderConfigLists();
+    updateButtons();
+  }
+
+  function isPercentFormat(fmt) {
+    return fmt && fmt.indexOf('%') !== -1;
+  }
+
+  function getLabel(sheetName, ws, r, c) {
+    // Check left
+    if (c > 0) {
+      const leftRef = XLSX.utils.encode_cell({ r, c: c - 1 });
+      const leftCell = ws[leftRef];
+      if (leftCell && leftCell.t === 's' && leftCell.v) return String(leftCell.v).trim();
+    }
+    // Check above
+    if (r > 0) {
+      const aboveRef = XLSX.utils.encode_cell({ r: r - 1, c });
+      const aboveCell = ws[aboveRef];
+      if (aboveCell && aboveCell.t === 's' && aboveCell.v) return String(aboveCell.v).trim();
+    }
+    return shortAddr(r, c);
+  }
+
+  function detectCells(sheetCellMeta) {
+    detectedInputs = [];
+    detectedOutputs = [];
+
+    for (let si = 0; si < sheetNames.length; si++) {
+      const name = sheetNames[si];
+      const ws = workbook.Sheets[name];
+      const meta = sheetCellMeta[name];
+      if (!meta) continue;
+
+      for (let r = 0; r < meta.length; r++) {
+        for (let c = 0; c < meta[r].length; c++) {
+          const m = meta[r][c];
+          if (!m) continue;
+
+          const label = getLabel(name, ws, r, c);
+          const addr = shortAddr(r, c);
+          const fullAddr = name + '!' + addr;
+
+          if (m.type === 'n' && typeof m.value === 'number') {
+            detectedInputs.push({
+              sheet: si, row: r, col: c, addr: fullAddr, shortAddr: addr,
+              label, value: m.value, isPercent: isPercentFormat(m.format)
+            });
+          } else if (m.type === 'formula') {
+            const val = hf.getCellValue({ sheet: si, row: r, col: c });
+            if (typeof val === 'number' && isFinite(val)) {
+              detectedOutputs.push({
+                sheet: si, row: r, col: c, addr: fullAddr, shortAddr: addr,
+                label, value: val
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Sheet tabs
+  function renderSheetTabs() {
+    sheetTabsEl.innerHTML = '';
+    sheetNames.forEach((name, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'sheet-tab' + (i === currentSheet ? ' active' : '');
+      btn.textContent = name;
+      btn.onclick = () => { currentSheet = i; renderSheetTabs(); renderGrid(i); };
+      sheetTabsEl.appendChild(btn);
+    });
+  }
+
+  // Grid rendering
+  function renderGrid(sheetIndex) {
+    const name = sheetNames[sheetIndex];
+    const ws = workbook.Sheets[name];
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+    const inputSet = new Set(detectedInputs.filter(d => d.sheet === sheetIndex).map(d => d.row + ',' + d.col));
+    const formulaSet = new Set(detectedOutputs.filter(d => d.sheet === sheetIndex).map(d => d.row + ',' + d.col));
+
+    let html = '<thead><tr><th></th>';
+    for (let c = range.s.c; c <= range.e.c; c++) html += '<th>' + colLetter(c) + '</th>';
+    html += '</tr></thead><tbody>';
+
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      html += '<tr><th>' + (r + 1) + '</th>';
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const key = r + ',' + c;
+        let cls = '';
+        if (inputSet.has(key)) cls = ' class="cell-input"';
+        else if (formulaSet.has(key)) cls = ' class="cell-formula"';
+
+        const val = hf.getCellValue({ sheet: sheetIndex, row: r, col: c });
+        let display = '';
+        if (val !== null && val !== undefined && val !== '') {
+          if (typeof val === 'number') display = formatNumber(val);
+          else display = String(val);
+        }
+        html += '<td' + cls + ' title="' + shortAddr(r, c) + '">' + escapeHtml(display) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody>';
+    gridTable.innerHTML = html;
+
+    // Stats
+    const sheetInputs = detectedInputs.filter(d => d.sheet === sheetIndex).length;
+    const sheetFormulas = detectedOutputs.filter(d => d.sheet === sheetIndex).length;
+    document.getElementById('stat-inputs').textContent = sheetInputs;
+    document.getElementById('stat-formulas').textContent = sheetFormulas;
+  }
+
+  function formatNumber(n) {
+    if (Math.abs(n) >= 1e6) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    if (Math.abs(n) >= 100) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (Math.abs(n) < 0.01 && n !== 0) return n.toExponential(2);
+    return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Config lists
+  function renderConfigLists() {
+    // Inputs
+    const inputItems = detectedInputs.map((inp, i) => {
+      const checked = selectedInputs.has(inp.addr) ? 'checked' : '';
+      const displayVal = inp.isPercent ? (inp.value * 100).toFixed(2) + '%' : formatNumber(inp.value);
+      return `<div class="config-item">
+        <input type="checkbox" id="inp-${i}" data-addr="${inp.addr}" ${checked} class="input-check">
+        <label for="inp-${i}">${escapeHtml(inp.label)} <span class="addr">${inp.shortAddr} = ${displayVal}</span></label>
+      </div>`;
+    }).join('');
+    inputListEl.innerHTML = '<h3>Input Variables (' + detectedInputs.length + ')</h3>' + (inputItems || '<p style="padding:0.75rem;color:var(--text-light);font-size:0.82rem;">No numeric input cells detected</p>');
+
+    // Outputs
+    const outputItems = detectedOutputs.map((out, i) => {
+      const checked = selectedOutputs.has(out.addr) ? 'checked' : '';
+      return `<div class="config-item">
+        <input type="checkbox" id="out-${i}" data-addr="${out.addr}" ${checked} class="output-check">
+        <label for="out-${i}">${escapeHtml(out.label)} <span class="addr">${out.shortAddr} = ${formatNumber(out.value)}</span></label>
+      </div>`;
+    }).join('');
+    outputListEl.innerHTML = '<h3>Output Formulas (' + detectedOutputs.length + ')</h3>' + (outputItems || '<p style="padding:0.75rem;color:var(--text-light);font-size:0.82rem;">No formula output cells detected</p>');
+
+    // Bind checkboxes
+    inputListEl.querySelectorAll('.input-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) selectedInputs.add(cb.dataset.addr);
+        else selectedInputs.delete(cb.dataset.addr);
+        renderRangeConfigs();
+        updateButtons();
+        saveConfig();
+      });
+    });
+    outputListEl.querySelectorAll('.output-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) selectedOutputs.add(cb.dataset.addr);
+        else selectedOutputs.delete(cb.dataset.addr);
+        updateButtons();
+        saveConfig();
+      });
+    });
+
+    renderRangeConfigs();
+  }
+
+  function renderRangeConfigs() {
+    if (selectedInputs.size === 0) {
+      rangeConfigsEl.classList.add('hidden');
+      return;
+    }
+    rangeConfigsEl.classList.remove('hidden');
+
+    let html = '';
+    for (const addr of selectedInputs) {
+      const inp = detectedInputs.find(d => d.addr === addr);
+      if (!inp) continue;
+
+      const range = inputRanges[addr] || getDefaultRange(inp);
+      inputRanges[addr] = range;
+
+      const displayLabel = inp.label.length > 25 ? inp.label.slice(0, 22) + '...' : inp.label;
+      html += `<div class="range-row">
+        <div class="label" title="${escapeHtml(inp.label)}">${escapeHtml(displayLabel)}</div>
+        <input type="number" value="${range.min}" data-addr="${addr}" data-field="min" class="range-input" step="any">
+        <input type="number" value="${range.max}" data-addr="${addr}" data-field="max" class="range-input" step="any">
+        <input type="number" value="${range.steps}" data-addr="${addr}" data-field="steps" class="range-input" min="2" max="50">
+      </div>`;
+    }
+    rangeRowsEl.innerHTML = html;
+
+    rangeRowsEl.querySelectorAll('.range-input').forEach(input => {
+      input.addEventListener('change', () => {
+        const addr = input.dataset.addr;
+        if (!inputRanges[addr]) inputRanges[addr] = {};
+        inputRanges[addr][input.dataset.field] = input.dataset.field === 'steps' ? parseInt(input.value) : parseFloat(input.value);
+        saveConfig();
+      });
+    });
+  }
+
+  function getDefaultRange(inp) {
+    const v = inp.value;
+    if (v === 0) return { min: -1, max: 1, steps: 10 };
+    if (inp.isPercent) return { min: +(v * 0.5).toFixed(6), max: +(v * 1.5).toFixed(6), steps: 10 };
+    return { min: +(v * 0.7).toFixed(4), max: +(v * 1.3).toFixed(4), steps: 10 };
+  }
+
+  function updateButtons() {
+    const hasInputs = selectedInputs.size > 0;
+    const hasOutputs = selectedOutputs.size > 0;
+    tornadoBtn.disabled = !(hasInputs && hasOutputs);
+    gridBtn.disabled = !(selectedInputs.size >= 2 && hasOutputs);
+  }
+
+  // Sensitivity Engine
+  function getSelectedInputData() {
+    return [...selectedInputs].map(addr => {
+      const inp = detectedInputs.find(d => d.addr === addr);
+      const range = inputRanges[addr] || getDefaultRange(inp);
+      return { ...inp, range };
+    });
+  }
+
+  function getSelectedOutputData() {
+    return [...selectedOutputs].map(addr => detectedOutputs.find(d => d.addr === addr)).filter(Boolean);
+  }
+
+  function setCellValue(inp, value) {
+    hf.setCellContents({ sheet: inp.sheet, row: inp.row, col: inp.col }, [[value]]);
+  }
+
+  function getCellValue(out) {
+    const v = hf.getCellValue({ sheet: out.sheet, row: out.row, col: out.col });
+    return typeof v === 'number' && isFinite(v) ? v : NaN;
+  }
+
+  // OAT Tornado
+  function runTornado() {
+    const inputs = getSelectedInputData();
+    const outputs = getSelectedOutputData();
+    if (!inputs.length || !outputs.length) return;
+
+    // Get base values
+    const baseOutputs = outputs.map(o => getCellValue(o));
+
+    // For each input, test min and max
+    const results = []; // { input, output, baseVal, lowVal, highVal, lowDelta, highDelta }
+
+    for (const inp of inputs) {
+      const baseVal = inp.value;
+
+      // Set to min
+      setCellValue(inp, inp.range.min);
+      const lowOutputs = outputs.map(o => getCellValue(o));
+
+      // Set to max
+      setCellValue(inp, inp.range.max);
+      const highOutputs = outputs.map(o => getCellValue(o));
+
+      // Reset to base
+      setCellValue(inp, baseVal);
+
+      for (let oi = 0; oi < outputs.length; oi++) {
+        results.push({
+          inputLabel: inp.label,
+          inputAddr: inp.shortAddr,
+          outputLabel: outputs[oi].label,
+          outputIdx: oi,
+          baseVal: baseOutputs[oi],
+          lowVal: lowOutputs[oi],
+          highVal: highOutputs[oi],
+          lowDelta: lowOutputs[oi] - baseOutputs[oi],
+          highDelta: highOutputs[oi] - baseOutputs[oi]
+        });
+      }
+    }
+
+    // Also run line chart data (OAT sweep)
+    const lineData = runOATSweep(inputs, outputs, baseOutputs);
+
+    renderTornado(results, outputs, baseOutputs);
+    renderSensitivityTable(results, inputs, outputs, baseOutputs);
+    renderLineCharts(lineData, inputs, outputs);
+
+    resultsCard.classList.remove('hidden');
+    resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    saveConfig();
+  }
+
+  function runOATSweep(inputs, outputs, baseOutputs) {
+    // Returns: { inputIdx -> { outputIdx -> [{ pctChange, value }] } }
+    const data = {};
+
+    for (let ii = 0; ii < inputs.length; ii++) {
+      const inp = inputs[ii];
+      data[ii] = {};
+      const steps = inp.range.steps || 10;
+      const stepSize = (inp.range.max - inp.range.min) / (steps - 1);
+
+      for (let oi = 0; oi < outputs.length; oi++) {
+        data[ii][oi] = [];
+      }
+
+      for (let s = 0; s < steps; s++) {
+        const testVal = inp.range.min + s * stepSize;
+        setCellValue(inp, testVal);
+
+        for (let oi = 0; oi < outputs.length; oi++) {
+          const outVal = getCellValue(outputs[oi]);
+          const pctChange = inp.value !== 0 ? ((testVal - inp.value) / Math.abs(inp.value)) * 100 : (s / (steps - 1)) * 100;
+          data[ii][oi].push({ pctChange, value: outVal, inputValue: testVal });
+        }
+      }
+
+      // Reset
+      setCellValue(inp, inp.value);
+    }
+
+    return data;
+  }
+
+  // Scenario Grid (2 inputs)
+  function runScenarioGrid() {
+    const inputs = getSelectedInputData();
+    const outputs = getSelectedOutputData();
+    if (inputs.length < 2 || !outputs.length) return;
+
+    const inp1 = inputs[0];
+    const inp2 = inputs[1];
+    const out = outputs[0]; // Use first selected output
+
+    const steps1 = inp1.range.steps || 10;
+    const steps2 = inp2.range.steps || 10;
+    const step1Size = (inp1.range.max - inp1.range.min) / (steps1 - 1);
+    const step2Size = (inp2.range.max - inp2.range.min) / (steps2 - 1);
+
+    const grid = [];
+    const row1Vals = [];
+    const row2Vals = [];
+
+    for (let i = 0; i < steps1; i++) row1Vals.push(inp1.range.min + i * step1Size);
+    for (let j = 0; j < steps2; j++) row2Vals.push(inp2.range.min + j * step2Size);
+
+    const baseVal = getCellValue(out);
+
+    for (let i = 0; i < steps1; i++) {
+      const row = [];
+      setCellValue(inp1, row1Vals[i]);
+      for (let j = 0; j < steps2; j++) {
+        setCellValue(inp2, row2Vals[j]);
+        row.push(getCellValue(out));
+      }
+      grid.push(row);
+    }
+
+    // Reset
+    setCellValue(inp1, inp1.value);
+    setCellValue(inp2, inp2.value);
+
+    renderHeatmapTable(grid, row1Vals, row2Vals, inp1, inp2, out, baseVal);
+
+    // Switch to table tab
+    document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.result-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-panel="table-panel"]').classList.add('active');
+    document.getElementById('table-panel').classList.add('active');
+
+    resultsCard.classList.remove('hidden');
+    resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Rendering
+  function destroyCharts() {
+    if (charts.tornado) { charts.tornado.destroy(); charts.tornado = null; }
+    charts.lines.forEach(c => c.destroy());
+    charts.lines = [];
+  }
+
+  function renderTornado(results, outputs, baseOutputs) {
+    // For each output, create a tornado sorted by total range
+    // Use first output for the main tornado
+    const outIdx = 0;
+    const filtered = results.filter(r => r.outputIdx === outIdx);
+    filtered.sort((a, b) => (Math.abs(b.highDelta) + Math.abs(b.lowDelta)) - (Math.abs(a.highDelta) + Math.abs(a.lowDelta)));
+
+    const labels = filtered.map(r => r.inputLabel + ' (' + r.inputAddr + ')');
+    const lowDeltas = filtered.map(r => r.lowDelta);
+    const highDeltas = filtered.map(r => r.highDelta);
+
+    if (charts.tornado) charts.tornado.destroy();
+
+    const ctx = document.getElementById('tornado-chart').getContext('2d');
+    charts.tornado = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Low Scenario',
+            data: lowDeltas,
+            backgroundColor: 'rgba(192, 57, 43, 0.7)',
+            borderColor: 'rgba(192, 57, 43, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'High Scenario',
+            data: highDeltas,
+            backgroundColor: 'rgba(39, 174, 96, 0.7)',
+            borderColor: 'rgba(39, 174, 96, 1)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Tornado: Impact on ' + outputs[outIdx].label + ' (base: ' + formatNumber(baseOutputs[outIdx]) + ')',
+            font: { size: 14 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.dataset.label + ': ' + formatNumber(ctx.raw) + ' (\u0394 from base)'
+            }
+          }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Change from Base Value' } }
+        }
+      }
+    });
+
+    // Set canvas height based on number of bars
+    document.getElementById('tornado-chart').style.height = Math.max(300, filtered.length * 40 + 80) + 'px';
+  }
+
+  function renderSensitivityTable(results, inputs, outputs, baseOutputs) {
+    const wrap = document.getElementById('table-wrap');
+
+    let html = '<table class="sens-table"><thead><tr><th>Input</th><th>Base Value</th><th>Low Value</th><th>High Value</th>';
+    outputs.forEach((o, i) => {
+      html += '<th>' + escapeHtml(o.label) + ' (\u0394)</th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    // Group by input
+    const inputAddrs = [...new Set(results.map(r => r.inputAddr))];
+    for (const addr of inputAddrs) {
+      const rows = results.filter(r => r.inputAddr === addr);
+      if (!rows.length) continue;
+      const inp = inputs.find(i => i.shortAddr === addr);
+      const range = inp ? inp.range : {};
+
+      html += '<tr>';
+      html += '<td style="text-align:left;font-weight:600;">' + escapeHtml(rows[0].inputLabel) + '</td>';
+      html += '<td>' + formatNumber(inp ? inp.value : 0) + '</td>';
+      html += '<td>' + formatNumber(range.min || 0) + '</td>';
+      html += '<td>' + formatNumber(range.max || 0) + '</td>';
+
+      for (let oi = 0; oi < outputs.length; oi++) {
+        const r = rows.find(r => r.outputIdx === oi);
+        if (r) {
+          const totalRange = Math.abs(r.highDelta) + Math.abs(r.lowDelta);
+          html += '<td>' + formatNumber(r.lowDelta) + ' / ' + formatNumber(r.highDelta) + '</td>';
+        } else {
+          html += '<td>-</td>';
+        }
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function renderHeatmapTable(grid, row1Vals, row2Vals, inp1, inp2, out, baseVal) {
+    const wrap = document.getElementById('table-wrap');
+
+    // Find min/max for coloring
+    let allVals = grid.flat().filter(v => isFinite(v));
+    const minVal = Math.min(...allVals);
+    const maxVal = Math.max(...allVals);
+
+    let html = '<h3 style="margin-bottom:0.5rem;font-size:0.9rem;">Scenario Grid: ' +
+      escapeHtml(out.label) + ' (base: ' + formatNumber(baseVal) + ')</h3>';
+    html += '<table class="sens-table"><thead><tr>';
+    html += '<th>' + escapeHtml(inp1.label) + ' \\ ' + escapeHtml(inp2.label) + '</th>';
+    row2Vals.forEach(v => { html += '<th>' + formatNumber(v) + '</th>'; });
+    html += '</tr></thead><tbody>';
+
+    for (let i = 0; i < grid.length; i++) {
+      html += '<tr><th style="text-align:right;font-weight:600;">' + formatNumber(row1Vals[i]) + '</th>';
+      for (let j = 0; j < grid[i].length; j++) {
+        const v = grid[i][j];
+        const color = heatmapColor(v, minVal, maxVal, baseVal);
+        html += '<td class="heatmap-cell" style="background:' + color + '">' + (isFinite(v) ? formatNumber(v) : 'ERR') + '</td>';
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function heatmapColor(value, min, max, base) {
+    if (!isFinite(value)) return '#fdecea';
+    const range = max - min;
+    if (range === 0) return '#ffffff';
+
+    const ratio = (value - base) / (range / 2);
+    const clamped = Math.max(-1, Math.min(1, ratio));
+
+    if (clamped < 0) {
+      // Red
+      const intensity = Math.abs(clamped);
+      const r = 255;
+      const g = Math.round(255 - intensity * 100);
+      const b = Math.round(255 - intensity * 120);
+      return `rgb(${r},${g},${b})`;
+    } else {
+      // Green
+      const intensity = clamped;
+      const r = Math.round(255 - intensity * 100);
+      const g = Math.round(255 - intensity * 30);
+      const b = Math.round(255 - intensity * 100);
+      return `rgb(${r},${g},${b})`;
+    }
+  }
+
+  function renderLineCharts(lineData, inputs, outputs) {
+    const container = document.getElementById('line-charts-container');
+    container.innerHTML = '';
+    charts.lines.forEach(c => c.destroy());
+    charts.lines = [];
+
+    const colors = ['#2980b9', '#c0392b', '#27ae60', '#8e44ad', '#d35400', '#16a085', '#2c3e50', '#f39c12'];
+
+    for (let oi = 0; oi < outputs.length; oi++) {
+      const div = document.createElement('div');
+      div.className = 'chart-box';
+      const canvas = document.createElement('canvas');
+      div.appendChild(canvas);
+      container.appendChild(div);
+
+      const datasets = inputs.map((inp, ii) => {
+        const points = lineData[ii][oi];
+        return {
+          label: inp.label,
+          data: points.map(p => ({ x: p.pctChange, y: p.value })),
+          borderColor: colors[ii % colors.length],
+          backgroundColor: colors[ii % colors.length] + '22',
+          borderWidth: 2,
+          pointRadius: 2,
+          tension: 0.3,
+          fill: false
+        };
+      });
+
+      const chart = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Sensitivity: ' + outputs[oi].label,
+              font: { size: 13 }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.dataset.label + ': ' + formatNumber(ctx.parsed.y) + ' @ ' + ctx.parsed.x.toFixed(1) + '%'
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              title: { display: true, text: '% Change from Base' },
+              ticks: { callback: v => v + '%' }
+            },
+            y: {
+              title: { display: true, text: outputs[oi].label }
+            }
+          }
+        }
+      });
+      charts.lines.push(chart);
+    }
+  }
+
+  // Result tabs
+  document.getElementById('result-tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.result-tab');
+    if (!tab) return;
+    document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.result-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+  });
+
+  // Buttons
+  tornadoBtn.addEventListener('click', () => {
+    try { runTornado(); } catch (e) { showStatus(configStatus, 'Error: ' + e.message, 'error'); console.error(e); }
+  });
+  gridBtn.addEventListener('click', () => {
+    try { runScenarioGrid(); } catch (e) { showStatus(configStatus, 'Error: ' + e.message, 'error'); console.error(e); }
+  });
+
+  // localStorage
+  function saveConfig() {
+    try {
+      const config = {
+        selectedInputs: [...selectedInputs],
+        selectedOutputs: [...selectedOutputs],
+        inputRanges
+      };
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      stored[fileName] = config;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    } catch (e) { /* ignore */ }
+  }
+
+  function restoreConfig() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const config = stored[fileName];
+      if (!config) return;
+
+      // Restore selections — only if the addresses still exist
+      const inputAddrs = new Set(detectedInputs.map(d => d.addr));
+      const outputAddrs = new Set(detectedOutputs.map(d => d.addr));
+
+      selectedInputs = new Set((config.selectedInputs || []).filter(a => inputAddrs.has(a)));
+      selectedOutputs = new Set((config.selectedOutputs || []).filter(a => outputAddrs.has(a)));
+
+      if (config.inputRanges) {
+        for (const [addr, range] of Object.entries(config.inputRanges)) {
+          if (inputAddrs.has(addr)) inputRanges[addr] = range;
+        }
+      }
+
+      renderConfigLists();
+      updateButtons();
+    } catch (e) { /* ignore */ }
+  }
+
+  function showStatus(el, msg, type) {
+    el.innerHTML = '<div class="status-msg ' + type + '">' + escapeHtml(msg) + '</div>';
+    setTimeout(() => { el.innerHTML = ''; }, 5000);
+  }
+
+})();
+</script>
+</body>
+</html>
