@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerPoint Template Applicator</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --primary: #1a5276;
+  --primary-light: #2980b9;
+  --accent: #27ae60;
+  --text: #2c3e50;
+  --text-light: #7f8c8d;
+  --border: #dce1e6;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --input-bg: #eafaf1;
+  --formula-bg: #eaf2f8;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 1.25rem 2rem;
+  text-align: center;
+}
+header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+header p { opacity: 0.85; font-size: 0.9rem; margin-top: 0.2rem; }
+
+.container {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.card h2 {
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-accent { background: var(--accent); color: white; }
+
+.upload-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+@media (max-width: 640px) {
+  .upload-row { grid-template-columns: 1fr; }
+}
+
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--primary-light);
+  background: var(--formula-bg);
+}
+.upload-zone input { display: none; }
+.upload-zone .label { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.upload-zone p { color: var(--text-light); margin-top: 0.5rem; font-size: 0.85rem; }
+
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  background: var(--input-bg);
+  border-radius: var(--radius-sm);
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+.file-info .name { font-weight: 600; }
+.file-info .meta { color: var(--text-light); font-size: 0.78rem; }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.hidden { display: none !important; }
+
+#status {
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+#status li { padding-left: 1.4rem; position: relative; }
+#status li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+#status li.done::before { background: var(--success); }
+#status li.active::before { background: var(--warning); animation: pulse 0.8s infinite alternate; }
+#status li.error::before { background: var(--danger); }
+
+@keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
+
+.error-msg {
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PowerPoint Template Applicator</h1>
+  <p>Apply a template's visual styling to your content slides</p>
+</header>
+
+<div class="container">
+  <!-- Upload Section -->
+  <div class="card">
+    <h2>1. Upload Files</h2>
+    <div class="upload-row">
+      <div>
+        <div class="upload-zone" id="templateZone">
+          <div class="label">Template File</div>
+          <p>Theme, colors, fonts &amp; master slides</p>
+          <p>Drop .pptx or click to browse</p>
+          <input type="file" id="templateInput" accept=".pptx">
+        </div>
+        <div class="file-info hidden" id="templateInfo">
+          <span class="name" id="templateName"></span>
+          <span class="meta" id="templateMeta"></span>
+        </div>
+      </div>
+      <div>
+        <div class="upload-zone" id="contentZone">
+          <div class="label">Content File</div>
+          <p>Your slides &amp; content to keep</p>
+          <p>Drop .pptx or click to browse</p>
+          <input type="file" id="contentInput" accept=".pptx">
+        </div>
+        <div class="file-info hidden" id="contentInfo">
+          <span class="name" id="contentName"></span>
+          <span class="meta" id="contentMeta"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card">
+    <h2>2. Apply Template</h2>
+    <div class="actions">
+      <button class="btn btn-primary" id="applyBtn" disabled>Apply Template</button>
+      <button class="btn btn-accent hidden" id="downloadBtn">Download Result</button>
+    </div>
+    <ul id="status" class="hidden" style="margin-top: 1rem;"></ul>
+    <div id="errorArea"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // State
+  let templateFile = null;
+  let contentFile = null;
+  let resultBlob = null;
+
+  // DOM refs
+  const templateZone = document.getElementById('templateZone');
+  const contentZone = document.getElementById('contentZone');
+  const templateInput = document.getElementById('templateInput');
+  const contentInput = document.getElementById('contentInput');
+  const templateInfo = document.getElementById('templateInfo');
+  const contentInfo = document.getElementById('contentInfo');
+  const applyBtn = document.getElementById('applyBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const statusList = document.getElementById('status');
+  const errorArea = document.getElementById('errorArea');
+
+  // --- Upload handling ---
+  function setupUploadZone(zone, input, onFile, infoEl, nameEl, metaEl) {
+    zone.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => {
+      if (input.files[0]) onFile(input.files[0], infoEl, nameEl, metaEl);
+    });
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (f && f.name.endsWith('.pptx')) onFile(f, infoEl, nameEl, metaEl);
+    });
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function onTemplateFile(f) {
+    templateFile = f;
+    document.getElementById('templateName').textContent = f.name;
+    document.getElementById('templateMeta').textContent = formatSize(f.size);
+    templateInfo.classList.remove('hidden');
+    checkReady();
+  }
+
+  function onContentFile(f) {
+    contentFile = f;
+    document.getElementById('contentName').textContent = f.name;
+    document.getElementById('contentMeta').textContent = formatSize(f.size);
+    contentInfo.classList.remove('hidden');
+    checkReady();
+  }
+
+  setupUploadZone(templateZone, templateInput, onTemplateFile);
+  setupUploadZone(contentZone, contentInput, onContentFile);
+
+  function checkReady() {
+    applyBtn.disabled = !(templateFile && contentFile);
+  }
+
+  // --- Status logging ---
+  let steps = [];
+  function resetStatus() {
+    statusList.innerHTML = '';
+    statusList.classList.remove('hidden');
+    steps = [];
+    errorArea.innerHTML = '';
+    downloadBtn.classList.add('hidden');
+    resultBlob = null;
+  }
+
+  function addStep(text) {
+    const li = document.createElement('li');
+    li.textContent = text;
+    li.classList.add('active');
+    statusList.appendChild(li);
+    steps.push(li);
+    // mark previous as done
+    if (steps.length > 1) {
+      steps[steps.length - 2].classList.remove('active');
+      steps[steps.length - 2].classList.add('done');
+    }
+    return li;
+  }
+
+  function finishStep(li) {
+    li.classList.remove('active');
+    li.classList.add('done');
+  }
+
+  function showError(msg) {
+    if (steps.length) {
+      const last = steps[steps.length - 1];
+      last.classList.remove('active');
+      last.classList.add('error');
+    }
+    errorArea.innerHTML = '<p class="error-msg" style="margin-top:0.75rem;">Error: ' + escapeHtml(msg) + '</p>';
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // --- XML helpers ---
+  const parser = new DOMParser();
+  const serializer = new XMLSerializer();
+
+  function parseXml(str) {
+    return parser.parseFromString(str, 'application/xml');
+  }
+
+  function serializeXml(doc) {
+    return serializer.serializeToString(doc);
+  }
+
+  async function getXml(zip, path) {
+    const text = await zip.file(path).async('string');
+    return parseXml(text);
+  }
+
+  function setXml(zip, path, doc) {
+    let str = serializeXml(doc);
+    // Ensure XML declaration
+    if (!str.startsWith('<?xml')) {
+      str = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + str;
+    }
+    zip.file(path, str);
+  }
+
+  // --- Core logic ---
+  applyBtn.addEventListener('click', async () => {
+    applyBtn.disabled = true;
+    resetStatus();
+
+    try {
+      // 1. Load both files
+      addStep('Loading PPTX files...');
+      const [templateZip, contentZip] = await Promise.all([
+        JSZip.loadAsync(templateFile),
+        JSZip.loadAsync(contentFile)
+      ]);
+
+      // 2. Gather template theme/master/layout files
+      addStep('Analyzing template structure...');
+      const templatePaths = Object.keys(templateZip.files);
+      const themePaths = templatePaths.filter(p => p.startsWith('ppt/theme/') && !templateZip.files[p].dir);
+      const masterPaths = templatePaths.filter(p => p.startsWith('ppt/slideMasters/') && !templateZip.files[p].dir);
+      const layoutPaths = templatePaths.filter(p => p.startsWith('ppt/slideLayouts/') && !templateZip.files[p].dir);
+
+      // 3. Remove old theme/masters/layouts from content
+      addStep('Removing old theme, masters, and layouts from content...');
+      const contentPaths = Object.keys(contentZip.files);
+      for (const p of contentPaths) {
+        if (p.startsWith('ppt/theme/') || p.startsWith('ppt/slideMasters/') || p.startsWith('ppt/slideLayouts/')) {
+          contentZip.remove(p);
+        }
+      }
+
+      // 4. Copy template theme/masters/layouts into content
+      addStep('Copying template theme, masters, and layouts...');
+      const allCopyPaths = [...themePaths, ...masterPaths, ...layoutPaths];
+      for (const p of allCopyPaths) {
+        const data = await templateZip.file(p).async('uint8array');
+        contentZip.file(p, data);
+      }
+
+      // 5. Copy referenced media from template
+      addStep('Copying template media files...');
+      const mediaToCheck = [...masterPaths, ...layoutPaths].filter(p => p.endsWith('.rels'));
+      const copiedMedia = new Set();
+      for (const relPath of mediaToCheck) {
+        const relXml = await templateZip.file(relPath).async('string');
+        const mediaMatches = relXml.match(/Target="[^"]*?\/media\/[^"]+"/g) || [];
+        for (const m of mediaMatches) {
+          const target = m.match(/Target="([^"]+)"/)[1];
+          // Resolve relative path from the rels file location
+          const basedir = relPath.substring(0, relPath.lastIndexOf('/'));
+          // rels files are in _rels/ subfolder, so go up from _rels/
+          const parentDir = basedir.replace(/\/_rels$/, '');
+          const resolved = resolvePath(parentDir, target);
+          if (!copiedMedia.has(resolved) && templateZip.file(resolved)) {
+            const data = await templateZip.file(resolved).async('uint8array');
+            contentZip.file(resolved, data);
+            copiedMedia.add(resolved);
+          }
+        }
+      }
+
+      // 6. Update [Content_Types].xml
+      addStep('Updating content types...');
+      await updateContentTypes(contentZip, templateZip);
+
+      // 7. Update presentation.xml.rels
+      addStep('Updating presentation relationships...');
+      await updatePresentationRels(contentZip, templateZip);
+
+      // 8. Update presentation.xml
+      addStep('Updating presentation master list...');
+      await updatePresentation(contentZip, templateZip);
+
+      // 9. Re-map slide layout references
+      addStep('Remapping slide layout references...');
+      await remapSlideLayouts(contentZip, templateZip);
+
+      // 10. Generate result
+      addStep('Generating output file...');
+      resultBlob = await contentZip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+
+      finishStep(steps[steps.length - 1]);
+      downloadBtn.classList.remove('hidden');
+
+    } catch (err) {
+      console.error(err);
+      showError(err.message || 'Unknown error during processing');
+    }
+
+    applyBtn.disabled = false;
+  });
+
+  // --- Download ---
+  downloadBtn.addEventListener('click', () => {
+    if (!resultBlob) return;
+    const name = contentFile.name.replace(/\.pptx$/i, '') + '_styled.pptx';
+    const url = URL.createObjectURL(resultBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // --- Path resolution ---
+  function resolvePath(base, relative) {
+    const parts = base.split('/');
+    const relParts = relative.split('/');
+    for (const rp of relParts) {
+      if (rp === '..') parts.pop();
+      else if (rp !== '.') parts.push(rp);
+    }
+    return parts.join('/');
+  }
+
+  // --- Update [Content_Types].xml ---
+  async function updateContentTypes(contentZip, templateZip) {
+    const ctDoc = await getXml(contentZip, '[Content_Types].xml');
+    const tCtDoc = await getXml(templateZip, '[Content_Types].xml');
+    const ns = 'http://schemas.openxmlformats.org/package/2006/content-types';
+
+    // Collect existing overrides in content
+    const root = ctDoc.documentElement;
+    const overrides = root.getElementsByTagNameNS(ns, 'Override');
+    const existingParts = new Set();
+    const toRemove = [];
+
+    for (let i = 0; i < overrides.length; i++) {
+      const partName = overrides[i].getAttribute('PartName');
+      existingParts.add(partName);
+      if (partName.startsWith('/ppt/theme/') || partName.startsWith('/ppt/slideMasters/') || partName.startsWith('/ppt/slideLayouts/')) {
+        toRemove.push(overrides[i]);
+      }
+    }
+    for (const el of toRemove) el.parentNode.removeChild(el);
+
+    // Copy overrides from template for theme/masters/layouts
+    const tOverrides = tCtDoc.documentElement.getElementsByTagNameNS(ns, 'Override');
+    for (let i = 0; i < tOverrides.length; i++) {
+      const partName = tOverrides[i].getAttribute('PartName');
+      if (partName.startsWith('/ppt/theme/') || partName.startsWith('/ppt/slideMasters/') || partName.startsWith('/ppt/slideLayouts/')) {
+        const el = ctDoc.createElementNS(ns, 'Override');
+        el.setAttribute('PartName', partName);
+        el.setAttribute('ContentType', tOverrides[i].getAttribute('ContentType'));
+        root.appendChild(el);
+      }
+    }
+
+    setXml(contentZip, '[Content_Types].xml', ctDoc);
+  }
+
+  // --- Update ppt/_rels/presentation.xml.rels ---
+  async function updatePresentationRels(contentZip, templateZip) {
+    const relPath = 'ppt/_rels/presentation.xml.rels';
+    const cRelDoc = await getXml(contentZip, relPath);
+    const tRelDoc = await getXml(templateZip, relPath);
+    const ns = 'http://schemas.openxmlformats.org/package/2006/relationships';
+    const root = cRelDoc.documentElement;
+
+    // Find max existing rId
+    let maxId = 0;
+    const allRels = root.getElementsByTagNameNS(ns, 'Relationship');
+    for (let i = 0; i < allRels.length; i++) {
+      const id = allRels[i].getAttribute('Id');
+      const num = parseInt(id.replace(/\D/g, ''), 10);
+      if (num > maxId) maxId = num;
+    }
+
+    // Remove old master/theme/layout relationships from content
+    const toRemove = [];
+    for (let i = 0; i < allRels.length; i++) {
+      const target = allRels[i].getAttribute('Target');
+      if (target.startsWith('slideMasters/') || target.startsWith('slideLayouts/') || target.startsWith('theme/')) {
+        toRemove.push(allRels[i]);
+      }
+    }
+    for (const el of toRemove) el.parentNode.removeChild(el);
+
+    // Add template's master/theme/layout relationships with new rIds
+    const tRels = tRelDoc.documentElement.getElementsByTagNameNS(ns, 'Relationship');
+    for (let i = 0; i < tRels.length; i++) {
+      const target = tRels[i].getAttribute('Target');
+      if (target.startsWith('slideMasters/') || target.startsWith('slideLayouts/') || target.startsWith('theme/')) {
+        maxId++;
+        const el = cRelDoc.createElementNS(ns, 'Relationship');
+        el.setAttribute('Id', 'rId' + maxId);
+        el.setAttribute('Type', tRels[i].getAttribute('Type'));
+        el.setAttribute('Target', target);
+        root.appendChild(el);
+      }
+    }
+
+    setXml(contentZip, relPath, cRelDoc);
+  }
+
+  // --- Update ppt/presentation.xml ---
+  async function updatePresentation(contentZip, templateZip) {
+    const presPath = 'ppt/presentation.xml';
+    const cPresDoc = await getXml(contentZip, presPath);
+    const tPresDoc = await getXml(templateZip, presPath);
+
+    // We need to know the rIds for masters in the content's updated rels
+    const relPath = 'ppt/_rels/presentation.xml.rels';
+    const cRelDoc = await getXml(contentZip, relPath);
+    const ns = 'http://schemas.openxmlformats.org/package/2006/relationships';
+    const pNs = 'http://schemas.openxmlformats.org/presentationml/2006/main';
+    const rNs = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+    // Find master rIds in content rels
+    const masterRIds = [];
+    const cRels = cRelDoc.documentElement.getElementsByTagNameNS(ns, 'Relationship');
+    for (let i = 0; i < cRels.length; i++) {
+      if (cRels[i].getAttribute('Target').startsWith('slideMasters/')) {
+        masterRIds.push(cRels[i].getAttribute('Id'));
+      }
+    }
+
+    // Get master id values from template's presentation.xml to preserve IDs
+    const tMasterIdList = tPresDoc.getElementsByTagNameNS(pNs, 'sldMasterId');
+    const masterIds = [];
+    for (let i = 0; i < tMasterIdList.length; i++) {
+      masterIds.push(tMasterIdList[i].getAttribute('id') || (2147483648 + i).toString());
+    }
+
+    // Find or create sldMasterIdLst in content
+    let masterList = cPresDoc.getElementsByTagNameNS(pNs, 'sldMasterIdLst')[0];
+    if (masterList) {
+      // Remove all existing children
+      while (masterList.firstChild) masterList.removeChild(masterList.firstChild);
+    } else {
+      masterList = cPresDoc.createElementNS(pNs, 'p:sldMasterIdLst');
+      const presEl = cPresDoc.getElementsByTagNameNS(pNs, 'presentation')[0];
+      // Insert before sldIdLst if it exists
+      const sldIdLst = presEl.getElementsByTagNameNS(pNs, 'sldIdLst')[0];
+      if (sldIdLst) presEl.insertBefore(masterList, sldIdLst);
+      else presEl.appendChild(masterList);
+    }
+
+    // Add master references
+    for (let i = 0; i < masterRIds.length; i++) {
+      const el = cPresDoc.createElementNS(pNs, 'p:sldMasterId');
+      el.setAttribute('id', masterIds[i] || (2147483648 + i).toString());
+      el.setAttributeNS(rNs, 'r:id', masterRIds[i]);
+      masterList.appendChild(el);
+    }
+
+    setXml(contentZip, presPath, cPresDoc);
+  }
+
+  // --- Re-map slide layout references ---
+  async function remapSlideLayouts(contentZip, templateZip) {
+    // Build a map of template layout type -> layout filename
+    const templatePaths = Object.keys(templateZip.files);
+    const tLayoutFiles = templatePaths.filter(p => p.match(/^ppt\/slideLayouts\/slideLayout\d+\.xml$/));
+
+    const typeToLayoutFile = {};
+    let fallbackLayout = tLayoutFiles[0] ? tLayoutFiles[0].replace('ppt/', '') : 'slideLayouts/slideLayout1.xml';
+
+    for (const lf of tLayoutFiles) {
+      const xml = await templateZip.file(lf).async('string');
+      const typeMatch = xml.match(/type="([^"]+)"/);
+      if (typeMatch) {
+        typeToLayoutFile[typeMatch[1]] = lf.replace('ppt/', '');
+      }
+    }
+
+    // Build a map of content's old layout filename -> layout type
+    const contentPaths = Object.keys(contentZip.files);
+    // We need to read old layout types from the TEMPLATE'S copied layouts (they replaced content's)
+    // Actually, we need the OLD content's layout types. But we already deleted them.
+    // Instead, let's look at each slide's rels to find what layout it references,
+    // then read that layout from the (now template) files to see its type,
+    // and ensure the mapping is correct.
+
+    // Actually since we already replaced layouts with template layouts, we need to:
+    // 1. Find what layout each slide points to
+    // 2. Check if that layout file exists in the new set
+    // 3. If not, remap to a sensible default
+
+    // Better approach: Build a map of ALL template layouts by filename
+    const templateLayoutsByFile = {};
+    for (const lf of tLayoutFiles) {
+      const shortName = lf.replace('ppt/', '');
+      const xml = await templateZip.file(lf).async('string');
+      const typeMatch = xml.match(/type="([^"]+)"/);
+      templateLayoutsByFile[shortName] = typeMatch ? typeMatch[1] : null;
+    }
+
+    // For each content slide, check its rels and update layout reference
+    const slideRelsFiles = contentPaths.filter(p => p.match(/^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/));
+
+    for (const relFile of slideRelsFiles) {
+      const relDoc = await getXml(contentZip, relFile);
+      const ns = 'http://schemas.openxmlformats.org/package/2006/relationships';
+      const rels = relDoc.documentElement.getElementsByTagNameNS(ns, 'Relationship');
+
+      for (let i = 0; i < rels.length; i++) {
+        const type = rels[i].getAttribute('Type');
+        if (type && type.includes('/slideLayout')) {
+          const oldTarget = rels[i].getAttribute('Target');
+          // oldTarget is like ../slideLayouts/slideLayout2.xml
+          const oldLayoutFile = oldTarget.replace('../', '');
+
+          // Check if this layout file exists in new content
+          if (contentZip.file('ppt/' + oldLayoutFile)) {
+            // Layout exists, keep it
+            continue;
+          }
+
+          // Layout doesn't exist - try to find best match
+          // First try: the old layout might have had a type we can match
+          // Since old layouts are gone, default to first available layout
+          rels[i].setAttribute('Target', '../' + fallbackLayout);
+        }
+      }
+
+      setXml(contentZip, relFile, relDoc);
+    }
+
+    // Also update slide master rels to point to correct theme
+    // Ensure master rels reference existing theme files
+    const masterRelsFiles = Object.keys(contentZip.files).filter(p =>
+      p.match(/^ppt\/slideMasters\/_rels\/slideMaster\d+\.xml\.rels$/)
+    );
+
+    for (const mRelFile of masterRelsFiles) {
+      // These were copied from template, so they should be correct already
+      // But verify theme references
+      const relDoc = await getXml(contentZip, mRelFile);
+      const ns = 'http://schemas.openxmlformats.org/package/2006/relationships';
+      const rels = relDoc.documentElement.getElementsByTagNameNS(ns, 'Relationship');
+      for (let i = 0; i < rels.length; i++) {
+        const target = rels[i].getAttribute('Target');
+        if (target && target.includes('theme')) {
+          const resolvedPath = resolvePath(mRelFile.replace('/_rels/', '/').replace('.rels', '').replace(/\/[^/]+$/, ''), target);
+          if (!contentZip.file(resolvedPath)) {
+            // Theme file missing - point to theme1.xml
+            rels[i].setAttribute('Target', '../theme/theme1.xml');
+          }
+        }
+      }
+      setXml(contentZip, mRelFile, relDoc);
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
