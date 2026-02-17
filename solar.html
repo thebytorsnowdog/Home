@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Installation Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #eef5f0;
+    --card: #ffffff;
+    --primary: #2d6a4f;
+    --primary-light: #40916c;
+    --accent: #f4a261;
+    --text: #1b4332;
+    --text-light: #52796f;
+    --border: #b7e4c7;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 1.5rem 2rem;
+    text-align: center;
+  }
+  header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; }
+  header p { opacity: 0.85; font-size: 0.95rem; margin-top: 0.25rem; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
+    max-width: 1300px;
+    margin: 1.5rem auto;
+    padding: 0 1.5rem;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card + .card { margin-top: 1.5rem; }
+  .card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-group { margin-bottom: 0.85rem; }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text-light);
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    background: white;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(45,106,79,0.12);
+  }
+  .yield-hint {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-top: 0.2rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0.5rem;
+  }
+  .btn:hover { background: var(--primary-light); }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .metric {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .metric .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .metric .label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.2rem;
+  }
+  .metric.highlight {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+  }
+  .metric.highlight .value { color: white; }
+  .metric.highlight .label { color: rgba(255,255,255,0.85); }
+
+  .chart-container {
+    position: relative;
+    height: 300px;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .data-table th, .data-table td {
+    padding: 0.5rem 0.4rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table th {
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 0.75rem;
+  }
+  .data-table th:first-child, .data-table td:first-child { text-align: left; }
+  .data-table tr:hover td { background: rgba(45,106,79,0.04); }
+  .table-wrap { overflow-x: auto; }
+
+  .results-col { display: none; }
+  .results-col.visible { display: block; }
+
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Solar Installation Calculator</h1>
+  <p>Financial model for solar + battery systems</p>
+</header>
+
+<div class="layout">
+  <div class="input-col">
+    <div class="card">
+      <h2>System &amp; Tariff Details</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Solar size (kW)</label>
+          <input type="number" id="solarSize" step="0.1" value="4">
+        </div>
+        <div class="form-group">
+          <label>Battery storage (kWh)</label>
+          <input type="number" id="batterySize" step="0.1" value="10">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Average daily electricity use (kWh)</label>
+        <input type="number" id="dailyUse" step="0.1" value="12">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Peak rate (p/kWh)</label>
+          <input type="number" id="peakRate" step="0.1" value="30">
+        </div>
+        <div class="form-group">
+          <label>Off-peak rate (p/kWh)</label>
+          <input type="number" id="offPeakRate" step="0.1" value="10">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Export rate (p/kWh)</label>
+        <input type="number" id="exportRate" step="0.1" value="15">
+      </div>
+
+      <div class="form-group">
+        <label>Total installation cost (&pound;)</label>
+        <input type="number" id="installCost" step="100" value="8000">
+      </div>
+
+      <div class="form-group">
+        <label>Region</label>
+        <select id="region" onchange="updateYieldHint()">
+          <option value="750">Scotland — North (750 kWh/kWp)</option>
+          <option value="800">Scotland — Central &amp; South (800 kWh/kWp)</option>
+          <option value="830">Northern England (830 kWh/kWp)</option>
+          <option value="860">North Wales &amp; Midlands (860 kWh/kWp)</option>
+          <option value="900" selected>Central England &amp; East Anglia (900 kWh/kWp)</option>
+          <option value="930">South Wales &amp; SW England (930 kWh/kWp)</option>
+          <option value="960">Southern England (960 kWh/kWp)</option>
+          <option value="1000">South Coast &amp; Channel Islands (1000 kWh/kWp)</option>
+          <option value="850">Northern Ireland (850 kWh/kWp)</option>
+        </select>
+        <div class="yield-hint" id="yieldHint">Estimated yield: 900 kWh/kWp/year</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Peak hours start</label>
+          <input type="time" id="peakStart" value="07:00">
+        </div>
+        <div class="form-group">
+          <label>Peak hours end</label>
+          <input type="time" id="peakEnd" value="00:00">
+        </div>
+      </div>
+
+      <button class="btn" onclick="calculate()">Calculate</button>
+    </div>
+  </div>
+
+  <div class="results-col" id="results">
+    <div class="card">
+      <h2>Summary</h2>
+      <div class="summary-grid">
+        <div class="metric highlight">
+          <div class="value" id="mAnnualSavings">-</div>
+          <div class="label">Annual Savings</div>
+        </div>
+        <div class="metric highlight">
+          <div class="value" id="mPayback">-</div>
+          <div class="label">Payback Period</div>
+        </div>
+        <div class="metric">
+          <div class="value" id="mROI">-</div>
+          <div class="label">ROI</div>
+        </div>
+        <div class="metric">
+          <div class="value" id="m25yr">-</div>
+          <div class="label">25-Year Savings</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Generation vs Consumption</h2>
+      <div class="chart-container"><canvas id="genChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Cost Comparison</h2>
+      <div class="chart-container"><canvas id="costChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Breakdown</h2>
+      <div class="table-wrap">
+        <table class="data-table" id="monthlyTable">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Generation (kWh)</th>
+              <th>Self-use (kWh)</th>
+              <th>Battery (kWh)</th>
+              <th>Export (kWh)</th>
+              <th>Grid Import (kWh)</th>
+              <th>Cost w/o Solar</th>
+              <th>Cost w/ Solar</th>
+              <th>Savings</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+
+  // UK-style monthly solar generation profile (% of annual total)
+  const MONTHLY_FACTORS = [3.5, 5.0, 7.5, 10.0, 12.5, 13.0, 12.5, 11.0, 9.0, 7.0, 5.5, 3.5];
+
+  // Approximate daylight hours per month (UK)
+  const DAYLIGHT_HOURS = [8, 9.5, 11.5, 13.5, 15.5, 16.5, 16, 14.5, 12.5, 10.5, 9, 7.5];
+
+  const INPUT_IDS = ['solarSize','batterySize','dailyUse','peakRate','offPeakRate','exportRate','installCost','region','peakStart','peakEnd'];
+  const LS_KEY = 'solar-calc-inputs';
+
+  let genChart = null;
+  let costChart = null;
+
+  // Load saved inputs
+  function loadInputs() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY));
+      if (!saved) return;
+      INPUT_IDS.forEach(id => {
+        if (saved[id] !== undefined) document.getElementById(id).value = saved[id];
+      });
+    } catch(e) {}
+  }
+
+  function saveInputs() {
+    const data = {};
+    INPUT_IDS.forEach(id => data[id] = document.getElementById(id).value);
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }
+
+  function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+  function parseTime(id) {
+    const v = document.getElementById(id).value;
+    const [h, m] = v.split(':').map(Number);
+    return h + m / 60;
+  }
+
+  function peakHoursPerDay() {
+    const start = parseTime('peakStart');
+    const end = parseTime('peakEnd');
+    if (end === 0) return 24 - start; // midnight = end of day
+    if (end > start) return end - start;
+    return (24 - start) + end; // wraps past midnight
+  }
+
+  function calculate() {
+    saveInputs();
+
+    const solarSize = getVal('solarSize');
+    const batterySize = getVal('batterySize');
+    const dailyUse = getVal('dailyUse');
+    const peakRate = getVal('peakRate') / 100; // convert p to £
+    const offPeakRate = getVal('offPeakRate') / 100;
+    const exportRate = getVal('exportRate') / 100;
+    const installCost = getVal('installCost');
+    const annualYield = parseFloat(document.getElementById('region').value);
+
+    const peakHrs = peakHoursPerDay();
+    const offPeakHrs = 24 - peakHrs;
+    const annualGen = solarSize * annualYield;
+
+    // When peak-offpeak spread exceeds export rate, it's more profitable to
+    // export all solar and use the battery for grid arbitrage (charge off-peak,
+    // discharge peak) rather than charging the battery from solar.
+    const exportPriority = (peakRate - offPeakRate) > exportRate;
+
+    const monthlyData = [];
+
+    for (let m = 0; m < 12; m++) {
+      const days = DAYS_IN_MONTH[m];
+      const monthGen = annualGen * (MONTHLY_FACTORS[m] / 100);
+      const daylight = DAYLIGHT_HOURS[m];
+
+      // Daily calculations averaged then scaled to month
+      const dailyGen = monthGen / days;
+
+      // Peak hours that overlap with daylight = solar available during peak
+      const peakStart = parseTime('peakStart');
+      const peakEnd = parseTime('peakEnd') === 0 ? 24 : parseTime('peakEnd');
+
+      // Approximate sunrise/sunset centred around noon
+      const sunrise = 12 - daylight / 2;
+      const sunset = 12 + daylight / 2;
+
+      // Overlap between [sunrise,sunset] and [peakStart,peakEnd]
+      const solarPeakOverlap = Math.max(0, Math.min(sunset, peakEnd) - Math.max(sunrise, peakStart));
+      const solarPeakFraction = daylight > 0 ? solarPeakOverlap / daylight : 0;
+
+      // Solar generated during peak hours
+      const dailySolarDuringPeak = dailyGen * solarPeakFraction;
+
+      // Demand rates per hour
+      const demandPerHour = dailyUse / 24;
+      const dailyPeakDemand = demandPerHour * peakHrs;
+      const dailyOffPeakDemand = demandPerHour * offPeakHrs;
+
+      // Peak-time demand during daylight overlap
+      const peakDemandDuringSolar = demandPerHour * solarPeakOverlap;
+
+      let dailySelfUse, dailyExport, dailyBatteryCharge, dailyBatteryDischarge;
+      let peakFromGrid, offPeakFromGrid;
+
+      if (exportPriority) {
+        // Export-priority mode: export all solar, battery does grid arbitrage
+        dailySelfUse = 0;
+        dailyExport = dailyGen;
+        // Battery charges from off-peak grid and discharges during peak
+        dailyBatteryCharge = Math.min(batterySize, dailyPeakDemand);
+        dailyBatteryDischarge = dailyBatteryCharge;
+        peakFromGrid = Math.max(0, dailyPeakDemand - dailyBatteryDischarge);
+        // Off-peak grid covers normal off-peak demand + battery charging
+        offPeakFromGrid = dailyOffPeakDemand + dailyBatteryCharge;
+      } else {
+        // Standard mode: self-consume solar, battery stores excess solar
+        // 1. Self-consumption during peak solar hours
+        dailySelfUse = Math.min(dailySolarDuringPeak, peakDemandDuringSolar);
+
+        // 2. Excess solar after self-consumption
+        const excessSolar = dailyGen - dailySelfUse;
+
+        // 3. Battery charging from excess solar
+        dailyBatteryCharge = Math.min(excessSolar, batterySize);
+
+        // 4. Export = remaining after self-use and battery
+        dailyExport = excessSolar - dailyBatteryCharge;
+
+        // 5. Remaining peak demand after self-consumption
+        const remainingPeakDemand = dailyPeakDemand - dailySelfUse;
+
+        // 6. Battery discharge covers remaining peak demand
+        dailyBatteryDischarge = Math.min(dailyBatteryCharge, remainingPeakDemand);
+        peakFromGrid = Math.max(0, remainingPeakDemand - dailyBatteryDischarge);
+        offPeakFromGrid = dailyOffPeakDemand;
+      }
+
+      // Scale to month
+      const mSelfUse = dailySelfUse * days;
+      const mBattery = dailyBatteryDischarge * days;
+      const mExport = dailyExport * days;
+      const mGridPeak = peakFromGrid * days;
+      const mGridOffPeak = offPeakFromGrid * days;
+      const mGridTotal = mGridPeak + mGridOffPeak;
+
+      // Costs
+      const costWithout = (dailyPeakDemand * peakRate + dailyOffPeakDemand * offPeakRate) * days;
+      const costWith = (peakFromGrid * peakRate + offPeakFromGrid * offPeakRate) * days - (dailyExport * exportRate * days);
+      const savings = costWithout - costWith;
+
+      monthlyData.push({
+        month: MONTHS[m],
+        generation: monthGen,
+        selfUse: mSelfUse,
+        battery: mBattery,
+        export: mExport,
+        gridImport: mGridTotal,
+        costWithout,
+        costWith: Math.max(0, costWith),
+        savings
+      });
+    }
+
+    const annualSavings = monthlyData.reduce((s, d) => s + d.savings, 0);
+    const paybackYears = installCost / annualSavings;
+    const roi = (annualSavings / installCost) * 100;
+
+    // Update summary
+    document.getElementById('mAnnualSavings').textContent = '£' + annualSavings.toFixed(0);
+    document.getElementById('mPayback').textContent = paybackYears.toFixed(1) + ' yrs';
+    document.getElementById('mROI').textContent = roi.toFixed(1) + '%';
+    document.getElementById('m25yr').textContent = '£' + (annualSavings * 25).toFixed(0);
+
+    // Show results
+    document.getElementById('results').classList.add('visible');
+
+    // Charts
+    renderGenChart(monthlyData);
+    renderCostChart(monthlyData);
+    renderTable(monthlyData);
+  }
+
+  function renderGenChart(data) {
+    const ctx = document.getElementById('genChart').getContext('2d');
+    if (genChart) genChart.destroy();
+    genChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.month),
+        datasets: [
+          { label: 'Solar Generation', data: data.map(d => d.generation), backgroundColor: '#f4a261' },
+          { label: 'Self-Consumption', data: data.map(d => d.selfUse + d.battery), backgroundColor: '#2d6a4f' },
+          { label: 'Grid Import', data: data.map(d => d.gridImport), backgroundColor: '#e76f51' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'kWh' } }
+        },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  function renderCostChart(data) {
+    const ctx = document.getElementById('costChart').getContext('2d');
+    if (costChart) costChart.destroy();
+    costChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.month),
+        datasets: [
+          { label: 'Without Solar', data: data.map(d => d.costWithout), backgroundColor: '#e76f51' },
+          { label: 'With Solar', data: data.map(d => d.costWith), backgroundColor: '#2d6a4f' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: '£' },
+            ticks: { callback: v => '£' + v.toFixed(0) }
+          }
+        },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  function renderTable(data) {
+    const tbody = document.querySelector('#monthlyTable tbody');
+    tbody.innerHTML = data.map(d => `
+      <tr>
+        <td>${d.month}</td>
+        <td>${d.generation.toFixed(1)}</td>
+        <td>${d.selfUse.toFixed(1)}</td>
+        <td>${d.battery.toFixed(1)}</td>
+        <td>${d.export.toFixed(1)}</td>
+        <td>${d.gridImport.toFixed(1)}</td>
+        <td>£${d.costWithout.toFixed(2)}</td>
+        <td>£${d.costWith.toFixed(2)}</td>
+        <td>£${d.savings.toFixed(2)}</td>
+      </tr>
+    `).join('') + `
+      <tr style="font-weight:700;border-top:2px solid var(--primary)">
+        <td>Total</td>
+        <td>${data.reduce((s,d)=>s+d.generation,0).toFixed(1)}</td>
+        <td>${data.reduce((s,d)=>s+d.selfUse,0).toFixed(1)}</td>
+        <td>${data.reduce((s,d)=>s+d.battery,0).toFixed(1)}</td>
+        <td>${data.reduce((s,d)=>s+d.export,0).toFixed(1)}</td>
+        <td>${data.reduce((s,d)=>s+d.gridImport,0).toFixed(1)}</td>
+        <td>£${data.reduce((s,d)=>s+d.costWithout,0).toFixed(2)}</td>
+        <td>£${data.reduce((s,d)=>s+d.costWith,0).toFixed(2)}</td>
+        <td>£${data.reduce((s,d)=>s+d.savings,0).toFixed(2)}</td>
+      </tr>
+    `;
+  }
+
+  function updateYieldHint() {
+    const v = document.getElementById('region').value;
+    document.getElementById('yieldHint').textContent = 'Estimated yield: ' + v + ' kWh/kWp/year';
+  }
+
+  // Init
+  loadInputs();
+  updateYieldHint();
+</script>
+</body>
+</html>
