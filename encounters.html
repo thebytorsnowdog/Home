@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daggerheart Encounter Builder</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1225;
+  --bg-light: #241a33;
+  --card: #2a1f3d;
+  --card-hover: #332649;
+  --primary: #c9a84c;
+  --primary-dim: #a68a3a;
+  --accent: #7b5ea7;
+  --accent-light: #9b7ec7;
+  --text: #e8e0f0;
+  --text-dim: #a89bb8;
+  --text-dark: #6b5f7a;
+  --border: #3d2f55;
+  --danger: #c0392b;
+  --danger-light: #e74c3c;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Header */
+header {
+  background: linear-gradient(135deg, #1f1535 0%, #2d1a4a 50%, #1f1535 100%);
+  border-bottom: 2px solid var(--primary);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.enc-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.enc-controls select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  min-width: 180px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: var(--card-hover); border-color: var(--primary-dim); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-light); }
+.btn-danger { border-color: var(--danger); color: var(--danger-light); }
+.btn-danger:hover { background: rgba(192,57,43,0.15); }
+.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+
+/* Layout */
+.sheet {
+  max-width: 1200px;
+  margin: 1rem auto;
+  padding: 0 1rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+/* Sections */
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.section-header h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.section-header .chevron {
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  font-size: 0.8rem;
+}
+.section.collapsed .section-header .chevron { transform: rotate(-90deg); }
+.section.collapsed .section-body { display: none; }
+.section-body { padding: 1rem; }
+
+/* Form inputs */
+input[type="text"], input[type="number"], textarea, select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+input[type="number"] { width: 70px; text-align: center; }
+textarea { resize: vertical; min-height: 80px; }
+label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+}
+
+/* Setup grid */
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+.setup-grid .field-group { display: flex; flex-direction: column; }
+.budget-display {
+  background: var(--bg);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+.budget-display .budget-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.budget-display .budget-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.budget-display .budget-formula {
+  font-size: 0.8rem;
+  color: var(--text-dark);
+}
+
+/* Narrative grid */
+.narrative-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.narrative-grid .field-group { display: flex; flex-direction: column; }
+.narrative-grid .full { grid-column: 1 / -1; }
+
+/* BP progress bar */
+.bp-bar-container {
+  margin-bottom: 1rem;
+}
+.bp-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+.bp-bar-header .bp-spent {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.bp-bar-header .bp-budget {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.bp-bar-track {
+  height: 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.bp-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s, background 0.3s;
+}
+.bp-bar-fill.under { background: var(--success); }
+.bp-bar-fill.at { background: var(--warning); }
+.bp-bar-fill.over { background: var(--danger-light); }
+
+/* Adversary rows */
+.adversary-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.adversary-item:last-child { margin-bottom: 0; }
+.adversary-row-top {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.adversary-row-top input[type="text"] { flex: 1; min-width: 120px; }
+.adversary-row-top select { width: 140px; flex-shrink: 0; }
+.adversary-row-stats {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.adversary-row-stats .stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.adversary-row-stats .stat-group label { font-size: 0.65rem; margin-bottom: 0.1rem; }
+.adversary-row-stats .stat-group input[type="number"] { width: 55px; font-size: 0.85rem; padding: 0.3rem; }
+.adversary-row-stats .stat-group input[type="text"] { width: 120px; font-size: 0.85rem; padding: 0.3rem; }
+.adversary-row-stats .stat-group.wide input[type="text"] { width: 160px; }
+.adversary-notes {
+  margin-top: 0.5rem;
+}
+.adversary-notes input { font-size: 0.85rem; }
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-dark);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.remove-btn:hover { color: var(--danger-light); }
+.add-row { margin-top: 0.5rem; display: flex; gap: 0.5rem; }
+
+/* Counter groups */
+.counter-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.counter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.counter-group .counter-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  min-width: 50px;
+  color: var(--accent);
+}
+.counter-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 2rem;
+  text-align: center;
+}
+.counter-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.counter-btn:hover { background: var(--card-hover); border-color: var(--primary-dim); }
+
+/* Library modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-light);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.modal-header h3 {
+  font-size: 0.95rem;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.modal-body {
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+}
+.library-tier-group { margin-bottom: 1rem; }
+.library-tier-group:last-child { margin-bottom: 0; }
+.library-tier-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-light);
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid var(--border);
+}
+.library-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.library-entry:hover { background: var(--card-hover); }
+.library-entry-info {
+  display: flex;
+  flex-direction: column;
+}
+.library-entry-name { font-size: 0.9rem; font-weight: 600; }
+.library-entry-detail { font-size: 0.75rem; color: var(--text-dim); }
+.library-entry-bp {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Notes */
+.notes-area { width: 100%; min-height: 150px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .narrative-grid { grid-template-columns: 1fr; }
+  .narrative-grid .full { grid-column: 1; }
+  .setup-grid { grid-template-columns: 1fr 1fr; }
+  header { flex-direction: column; text-align: center; }
+}
+@media (max-width: 480px) {
+  .setup-grid { grid-template-columns: 1fr; }
+  .adversary-row-top select { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Daggerheart Encounters</h1>
+  <div class="enc-controls">
+    <select id="encSelect"></select>
+    <button class="btn btn-primary" onclick="newEncounter()">+ New</button>
+    <button class="btn btn-danger" onclick="deleteEncounter()">Delete</button>
+  </div>
+</header>
+
+<div class="sheet" id="sheet">
+
+  <!-- Encounter Setup -->
+  <div class="section" data-section="setup">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Encounter Setup</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="setup-grid">
+        <div class="field-group" style="grid-column:1/-1">
+          <label>Encounter Name</label>
+          <input type="text" data-field="name" placeholder="Encounter name">
+        </div>
+        <div class="field-group">
+          <label>Party Size</label>
+          <input type="number" data-field="partySize" min="1" max="12" value="4" style="width:100%">
+        </div>
+        <div class="field-group">
+          <label>Party Tier</label>
+          <select data-field="partyTier" style="width:100%">
+            <option value="1">Tier 1</option>
+            <option value="2">Tier 2</option>
+            <option value="3">Tier 3</option>
+            <option value="4">Tier 4</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Difficulty</label>
+          <select data-field="difficulty" style="width:100%">
+            <option value="veryEasy">Very Easy</option>
+            <option value="easy">Easy</option>
+            <option value="standard" selected>Standard</option>
+            <option value="challenging">Challenging</option>
+            <option value="climactic">Climactic</option>
+          </select>
+        </div>
+        <div class="budget-display" id="budgetDisplay">
+          <div class="budget-label">Battle Point Budget</div>
+          <div class="budget-value" id="budgetValue">14</div>
+          <div class="budget-formula" id="budgetFormula">3 × 4 + 2</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Narrative -->
+  <div class="section" data-section="narrative">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Narrative</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="narrative-grid">
+        <div class="field-group">
+          <label>Goal</label>
+          <input type="text" data-field="narrative.goal" placeholder="What must the PCs achieve?">
+        </div>
+        <div class="field-group">
+          <label>Stakes</label>
+          <input type="text" data-field="narrative.stakes" placeholder="What happens if they fail?">
+        </div>
+        <div class="field-group full">
+          <label>Twist / Evolving Element</label>
+          <input type="text" data-field="narrative.twist" placeholder="How does the encounter change mid-fight?">
+        </div>
+        <div class="field-group full">
+          <label>Environment</label>
+          <textarea data-field="narrative.environment" placeholder="Terrain, hazards, lighting, notable features..."></textarea>
+        </div>
+        <div class="field-group full">
+          <label>Spotlight Hooks</label>
+          <textarea data-field="narrative.spotlightHooks" placeholder="Per-PC hooks: moments where each character can shine..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adversary Roster -->
+  <div class="section" data-section="adversaries">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Adversary Roster</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="bp-bar-container">
+        <div class="bp-bar-header">
+          <span class="bp-spent" id="bpSpent">0 BP spent</span>
+          <span class="bp-budget" id="bpBudgetLabel">of 14 budget</span>
+        </div>
+        <div class="bp-bar-track">
+          <div class="bp-bar-fill under" id="bpBarFill" style="width:0%"></div>
+        </div>
+      </div>
+      <div id="adversaryList"></div>
+      <div class="add-row">
+        <button class="btn btn-sm btn-primary" onclick="openLibrary()">+ Add from Library</button>
+        <button class="btn btn-sm" onclick="addCustomAdversary()">+ Add Custom</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battle Tracker -->
+  <div class="section" data-section="tracker">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Battle Tracker</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="counter-row">
+        <div class="counter-group">
+          <span class="counter-label">Fear</span>
+          <button class="counter-btn" onclick="adjustTracker('fear',-1)">-</button>
+          <span class="counter-value" id="fearValue">0</span>
+          <button class="counter-btn" onclick="adjustTracker('fear',1)">+</button>
+        </div>
+        <div class="counter-group">
+          <span class="counter-label">Round</span>
+          <button class="counter-btn" onclick="adjustTracker('round',-1)">-</button>
+          <span class="counter-value" id="roundValue">1</span>
+          <button class="counter-btn" onclick="adjustTracker('round',1)">+</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Action Tokens / Turn Order Notes</label>
+        <textarea data-field="tracker.notes" placeholder="Track action tokens, turn order, conditions..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="section" data-section="notes">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Notes</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <textarea class="notes-area" data-field="notes" placeholder="Session notes, reminders, loot..."></textarea>
+    </div>
+  </div>
+
+</div>
+
+<!-- Library Modal -->
+<div class="modal-overlay" id="libraryModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Adversary Library</h3>
+      <button class="remove-btn" onclick="closeLibrary()" style="font-size:1.4rem">&times;</button>
+    </div>
+    <div class="modal-body" id="libraryBody"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'daggerheart_encounters';
+
+const ADVERSARY_TYPES = [
+  { value: 'minion', label: 'Minion Group', bp: 1 },
+  { value: 'support', label: 'Support', bp: 1 },
+  { value: 'standard', label: 'Standard', bp: 2 },
+  { value: 'ranged', label: 'Ranged', bp: 2 },
+  { value: 'skulk', label: 'Skulk', bp: 2 },
+  { value: 'horde', label: 'Horde', bp: 2 },
+  { value: 'leader', label: 'Leader', bp: 3 },
+  { value: 'bruiser', label: 'Bruiser', bp: 4 },
+  { value: 'solo', label: 'Solo', bp: 5 }
+];
+
+const BP_TABLE = {};
+ADVERSARY_TYPES.forEach(t => BP_TABLE[t.value] = t.bp);
+
+const DIFFICULTY_FORMULAS = {
+  veryEasy:    (pcs) => ({ budget: 2 * pcs + 1, formula: `< 2 × ${pcs} + 2` }),
+  easy:        (pcs) => ({ budget: 2 * pcs + 2, formula: `2 × ${pcs} + 2` }),
+  standard:    (pcs) => ({ budget: 3 * pcs + 2, formula: `3 × ${pcs} + 2` }),
+  challenging: (pcs) => ({ budget: 3 * pcs + 4, formula: `3 × ${pcs} + 4` }),
+  climactic:   (pcs) => ({ budget: 4 * pcs + 2, formula: `4 × ${pcs} + 2` })
+};
+
+const ADVERSARY_LIBRARY = [
+  // Tier 1
+  { name: 'Dredge', type: 'minion', tier: 1, difficulty: 8, hp: 1, thresholdMajor: 3, thresholdSevere: 6, attack: 'Claw', damage: '1d6 physical' },
+  { name: 'Skeleton Warrior', type: 'standard', tier: 1, difficulty: 10, hp: 3, thresholdMajor: 4, thresholdSevere: 8, attack: 'Rusty Sword', damage: '1d8+1 physical' },
+  { name: 'Skeleton Archer', type: 'ranged', tier: 1, difficulty: 9, hp: 3, thresholdMajor: 3, thresholdSevere: 7, attack: 'Bone Bow', damage: '1d8 physical' },
+  { name: 'Bandit', type: 'standard', tier: 1, difficulty: 10, hp: 4, thresholdMajor: 5, thresholdSevere: 9, attack: 'Short Sword', damage: '1d8+2 physical' },
+  { name: 'Bandit Captain', type: 'leader', tier: 1, difficulty: 12, hp: 6, thresholdMajor: 6, thresholdSevere: 11, attack: 'Longsword', damage: '1d10+2 physical' },
+  { name: 'Wolf', type: 'standard', tier: 1, difficulty: 10, hp: 3, thresholdMajor: 4, thresholdSevere: 8, attack: 'Bite', damage: '1d8+1 physical' },
+  { name: 'Giant Spider', type: 'bruiser', tier: 1, difficulty: 11, hp: 8, thresholdMajor: 6, thresholdSevere: 12, attack: 'Venomous Bite', damage: '1d10+2 physical' },
+  // Tier 2
+  { name: 'Knight', type: 'standard', tier: 2, difficulty: 14, hp: 6, thresholdMajor: 7, thresholdSevere: 13, attack: 'Greatsword', damage: '2d8+2 physical' },
+  { name: 'Mage', type: 'ranged', tier: 2, difficulty: 13, hp: 5, thresholdMajor: 6, thresholdSevere: 11, attack: 'Arcane Bolt', damage: '2d8+1 magic' },
+  { name: 'Ogre', type: 'bruiser', tier: 2, difficulty: 13, hp: 12, thresholdMajor: 9, thresholdSevere: 16, attack: 'Greatclub', damage: '2d10+3 physical' },
+  { name: 'Cultist', type: 'support', tier: 2, difficulty: 12, hp: 4, thresholdMajor: 5, thresholdSevere: 10, attack: 'Dark Prayer', damage: '1d8 magic' },
+  { name: 'Assassin', type: 'skulk', tier: 2, difficulty: 14, hp: 5, thresholdMajor: 6, thresholdSevere: 12, attack: 'Poisoned Dagger', damage: '2d8+2 physical' },
+  // Tier 3
+  { name: 'Dragon Wyrmling', type: 'solo', tier: 3, difficulty: 17, hp: 20, thresholdMajor: 12, thresholdSevere: 22, attack: 'Fire Breath / Claw', damage: '3d8+3 magic' },
+  { name: 'War Priest', type: 'leader', tier: 3, difficulty: 16, hp: 10, thresholdMajor: 10, thresholdSevere: 18, attack: 'Holy Smite', damage: '2d10+3 magic' },
+  { name: 'Shadow Stalker', type: 'skulk', tier: 3, difficulty: 16, hp: 8, thresholdMajor: 9, thresholdSevere: 16, attack: 'Shadow Strike', damage: '3d8+2 physical' },
+  // Tier 4
+  { name: 'Ancient Dragon', type: 'solo', tier: 4, difficulty: 20, hp: 35, thresholdMajor: 18, thresholdSevere: 32, attack: 'Cataclysmic Breath / Rend', damage: '4d10+5 magic' },
+  { name: 'Lich', type: 'leader', tier: 4, difficulty: 19, hp: 16, thresholdMajor: 14, thresholdSevere: 26, attack: 'Necrotic Blast', damage: '4d8+4 magic' },
+  { name: 'Death Knight', type: 'bruiser', tier: 4, difficulty: 19, hp: 22, thresholdMajor: 16, thresholdSevere: 28, attack: 'Doom Blade', damage: '4d8+5 physical' }
+];
+
+function uuid() {
+  return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function defaultEncounter() {
+  return {
+    id: uuid(),
+    name: 'New Encounter',
+    partySize: 4,
+    partyTier: '1',
+    difficulty: 'standard',
+    narrative: { goal: '', stakes: '', twist: '', environment: '', spotlightHooks: '' },
+    adversaries: [],
+    tracker: { fear: 0, round: 1, notes: '' },
+    notes: ''
+  };
+}
+
+function loadAll() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveAll(encs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(encs));
+}
+
+let encounters = loadAll();
+let currentId = null;
+
+function current() {
+  return encounters.find(e => e.id === currentId);
+}
+
+function save() {
+  saveAll(encounters);
+}
+
+// --- Budget calculation ---
+function calcBudget(enc) {
+  const pcs = enc.partySize || 4;
+  const diff = enc.difficulty || 'standard';
+  return DIFFICULTY_FORMULAS[diff](pcs);
+}
+
+function calcSpentBP(enc) {
+  return enc.adversaries.reduce((sum, a) => sum + (a.bpCost || 0) * (a.quantity || 1), 0);
+}
+
+function updateBudgetDisplay() {
+  const enc = current(); if (!enc) return;
+  const { budget, formula } = calcBudget(enc);
+  document.getElementById('budgetValue').textContent = budget;
+  document.getElementById('budgetFormula').textContent = formula;
+  updateBPBar(enc, budget);
+}
+
+function updateBPBar(enc, budget) {
+  const spent = calcSpentBP(enc);
+  const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+  const fill = document.getElementById('bpBarFill');
+  fill.style.width = pct + '%';
+  fill.className = 'bp-bar-fill ' + (spent > budget ? 'over' : spent === budget ? 'at' : 'under');
+  document.getElementById('bpSpent').textContent = spent + ' BP spent';
+  document.getElementById('bpBudgetLabel').textContent = 'of ' + budget + ' budget';
+  if (spent > budget) {
+    document.getElementById('bpSpent').style.color = 'var(--danger-light)';
+  } else if (spent === budget) {
+    document.getElementById('bpSpent').style.color = 'var(--warning)';
+  } else {
+    document.getElementById('bpSpent').style.color = 'var(--success)';
+  }
+}
+
+// --- Encounter selector ---
+function populateSelect() {
+  const sel = document.getElementById('encSelect');
+  sel.innerHTML = '';
+  encounters.forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e.id;
+    opt.textContent = e.name || 'Unnamed';
+    sel.appendChild(opt);
+  });
+  if (currentId) sel.value = currentId;
+}
+
+function switchEncounter(id) {
+  currentId = id;
+  loadEncounterUI();
+}
+
+function newEncounter() {
+  const e = defaultEncounter();
+  encounters.push(e);
+  currentId = e.id;
+  save();
+  populateSelect();
+  loadEncounterUI();
+}
+
+function deleteEncounter() {
+  if (encounters.length <= 1) return;
+  if (!confirm('Delete this encounter?')) return;
+  encounters = encounters.filter(e => e.id !== currentId);
+  currentId = encounters[0].id;
+  save();
+  populateSelect();
+  loadEncounterUI();
+}
+
+// --- Adversary rendering ---
+function renderAdversaries() {
+  const enc = current(); if (!enc) return;
+  const el = document.getElementById('adversaryList');
+  el.innerHTML = '';
+  enc.adversaries.forEach((a, i) => {
+    const item = document.createElement('div');
+    item.className = 'adversary-item';
+
+    const typeOptions = ADVERSARY_TYPES.map(t =>
+      `<option value="${t.value}" ${a.type === t.value ? 'selected' : ''}>${t.label} (${t.bp} BP)</option>`
+    ).join('');
+
+    item.innerHTML = `
+      <div class="adversary-row-top">
+        <input type="text" value="${esc(a.name)}" placeholder="Name" oninput="updateAdv(${i},'name',this.value)">
+        <select onchange="updateAdvType(${i},this.value)">${typeOptions}</select>
+        <button class="remove-btn" onclick="removeAdv(${i})" title="Remove">&times;</button>
+      </div>
+      <div class="adversary-row-stats">
+        <div class="stat-group">
+          <label>BP</label>
+          <input type="number" value="${a.bpCost}" min="0" oninput="updateAdv(${i},'bpCost',+this.value)">
+        </div>
+        <div class="stat-group">
+          <label>Qty</label>
+          <input type="number" value="${a.quantity || 1}" min="1" oninput="updateAdv(${i},'quantity',+this.value)">
+        </div>
+        <div class="stat-group">
+          <label>Diff</label>
+          <input type="number" value="${a.difficulty || 0}" oninput="updateAdv(${i},'difficulty',+this.value)">
+        </div>
+        <div class="stat-group">
+          <label>HP</label>
+          <input type="number" value="${a.hp || 0}" min="0" oninput="updateAdv(${i},'hp',+this.value)">
+        </div>
+        <div class="stat-group">
+          <label>Major</label>
+          <input type="number" value="${a.thresholdMajor || 0}" min="0" oninput="updateAdv(${i},'thresholdMajor',+this.value)">
+        </div>
+        <div class="stat-group">
+          <label>Severe</label>
+          <input type="number" value="${a.thresholdSevere || 0}" min="0" oninput="updateAdv(${i},'thresholdSevere',+this.value)">
+        </div>
+        <div class="stat-group wide">
+          <label>Attack</label>
+          <input type="text" value="${esc(a.attack || '')}" placeholder="Attack" oninput="updateAdv(${i},'attack',this.value)">
+        </div>
+        <div class="stat-group wide">
+          <label>Damage</label>
+          <input type="text" value="${esc(a.damage || '')}" placeholder="e.g. 1d8+1" oninput="updateAdv(${i},'damage',this.value)">
+        </div>
+      </div>
+      <div class="adversary-notes">
+        <input type="text" value="${esc(a.notes || '')}" placeholder="Notes" oninput="updateAdv(${i},'notes',this.value)">
+      </div>`;
+    el.appendChild(item);
+  });
+  updateBudgetDisplay();
+}
+
+function addCustomAdversary() {
+  const enc = current(); if (!enc) return;
+  enc.adversaries.push({
+    id: uuid(), name: '', type: 'standard', bpCost: 2,
+    difficulty: 0, hp: 0, thresholdMajor: 0, thresholdSevere: 0,
+    attack: '', damage: '', quantity: 1, notes: '', fromLibrary: false
+  });
+  save(); renderAdversaries();
+}
+
+function addFromLibrary(libIndex) {
+  const enc = current(); if (!enc) return;
+  const tmpl = ADVERSARY_LIBRARY[libIndex];
+  enc.adversaries.push({
+    id: uuid(), name: tmpl.name, type: tmpl.type, bpCost: BP_TABLE[tmpl.type],
+    difficulty: tmpl.difficulty, hp: tmpl.hp,
+    thresholdMajor: tmpl.thresholdMajor, thresholdSevere: tmpl.thresholdSevere,
+    attack: tmpl.attack, damage: tmpl.damage, quantity: 1, notes: '', fromLibrary: true
+  });
+  save(); renderAdversaries();
+  closeLibrary();
+}
+
+function removeAdv(i) {
+  const enc = current(); if (!enc) return;
+  enc.adversaries.splice(i, 1);
+  save(); renderAdversaries();
+}
+
+function updateAdv(i, key, val) {
+  const enc = current(); if (!enc) return;
+  enc.adversaries[i][key] = val;
+  save();
+  if (key === 'bpCost' || key === 'quantity') updateBudgetDisplay();
+}
+
+function updateAdvType(i, typeVal) {
+  const enc = current(); if (!enc) return;
+  enc.adversaries[i].type = typeVal;
+  enc.adversaries[i].bpCost = BP_TABLE[typeVal];
+  save(); renderAdversaries();
+}
+
+// --- Library modal ---
+function openLibrary() {
+  const enc = current(); if (!enc) return;
+  const tier = parseInt(enc.partyTier) || 1;
+  const body = document.getElementById('libraryBody');
+  body.innerHTML = '';
+
+  for (let t = 1; t <= 4; t++) {
+    const entries = ADVERSARY_LIBRARY.map((a, idx) => ({ ...a, idx })).filter(a => a.tier === t);
+    if (entries.length === 0) continue;
+    const group = document.createElement('div');
+    group.className = 'library-tier-group';
+    group.innerHTML = `<div class="library-tier-title">Tier ${t}${t === tier ? ' (current)' : ''}</div>`;
+    entries.forEach(a => {
+      const typeInfo = ADVERSARY_TYPES.find(at => at.value === a.type);
+      const entry = document.createElement('div');
+      entry.className = 'library-entry';
+      entry.onclick = () => addFromLibrary(a.idx);
+      entry.innerHTML = `
+        <div class="library-entry-info">
+          <span class="library-entry-name">${esc(a.name)}</span>
+          <span class="library-entry-detail">${typeInfo ? typeInfo.label : a.type} · Diff ${a.difficulty} · HP ${a.hp}</span>
+        </div>
+        <span class="library-entry-bp">${typeInfo ? typeInfo.bp : '?'} BP</span>`;
+      group.appendChild(entry);
+    });
+    body.appendChild(group);
+  }
+
+  document.getElementById('libraryModal').classList.add('active');
+}
+
+function closeLibrary() {
+  document.getElementById('libraryModal').classList.remove('active');
+}
+
+// --- Battle tracker counters ---
+function adjustTracker(field, delta) {
+  const enc = current(); if (!enc) return;
+  const min = field === 'round' ? 1 : 0;
+  enc.tracker[field] = Math.max(min, (enc.tracker[field] || 0) + delta);
+  save();
+  document.getElementById(field + 'Value').textContent = enc.tracker[field];
+}
+
+// --- Generic field binding ---
+function setNestedField(obj, path, val) {
+  const parts = path.split('.');
+  let cur = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!cur[parts[i]]) cur[parts[i]] = {};
+    cur = cur[parts[i]];
+  }
+  cur[parts[parts.length - 1]] = val;
+}
+
+function getNestedField(obj, path) {
+  return path.split('.').reduce((o, k) => (o || {})[k], obj);
+}
+
+function bindFields() {
+  const enc = current(); if (!enc) return;
+  document.querySelectorAll('[data-field]').forEach(el => {
+    const field = el.dataset.field;
+    const val = getNestedField(enc, field);
+    if (el.tagName === 'SELECT') {
+      el.value = val ?? el.options[0]?.value ?? '';
+    } else if (el.type === 'number') {
+      el.value = val ?? '';
+    } else {
+      el.value = val ?? '';
+    }
+
+    el.oninput = el.onchange = () => {
+      const v = el.type === 'number' ? (el.value === '' ? 0 : +el.value) : el.value;
+      setNestedField(enc, field, v);
+      if (field === 'name') {
+        populateSelect();
+        document.getElementById('encSelect').value = currentId;
+      }
+      if (field === 'partySize' || field === 'partyTier' || field === 'difficulty') {
+        updateBudgetDisplay();
+      }
+      save();
+    };
+  });
+}
+
+// --- Section collapse ---
+function toggleSection(headerEl) {
+  headerEl.closest('.section').classList.toggle('collapsed');
+}
+
+// --- Escape HTML ---
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// --- Load full UI ---
+function loadEncounterUI() {
+  const enc = current(); if (!enc) return;
+  bindFields();
+  updateBudgetDisplay();
+  renderAdversaries();
+  document.getElementById('fearValue').textContent = enc.tracker.fear || 0;
+  document.getElementById('roundValue').textContent = enc.tracker.round || 1;
+}
+
+// --- Close modal on overlay click ---
+document.getElementById('libraryModal').addEventListener('click', function(e) {
+  if (e.target === this) closeLibrary();
+});
+
+// --- Init ---
+document.getElementById('encSelect').addEventListener('change', function() {
+  switchEncounter(this.value);
+});
+
+if (encounters.length === 0) {
+  newEncounter();
+} else {
+  currentId = encounters[0].id;
+  populateSelect();
+  loadEncounterUI();
+}
+</script>
+</body>
+</html>

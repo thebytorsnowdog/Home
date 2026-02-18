@@ -20,6 +20,7 @@ This is a collection of standalone, single-file HTML web applications. Each app 
 - `sensitivity.html` — Financial model sensitivity analysis: upload Excel, auto-detect inputs/outputs, run tornado & scenario grid analysis (uses SheetJS, HyperFormula, Chart.js via CDN)
 - `pptx-template.html` — PowerPoint template applicator: apply theme/masters/layouts from a template PPTX to a content PPTX (uses JSZip via CDN)
 - `solar.html` — Solar installation financial calculator: model savings, payback, ROI for solar + battery systems (uses Chart.js via CDN)
+- `encounters.html` — Daggerheart encounter builder: BP budgeting, adversary library, narrative planning, battle tracker (localStorage persistence)
 
 ## Development
 
