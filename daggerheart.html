@@ -400,15 +400,53 @@ label {
 .domain-tab:hover { border-color: var(--primary-dim); color: var(--text); }
 .domain-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 .browser-card {
-  display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem;
+  display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem;
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
   margin-bottom: 0.3rem; font-size: 0.85rem;
 }
 .browser-card .card-info { flex: 1; }
 .browser-card .card-info .card-name { color: var(--text); font-weight: 500; }
 .browser-card .card-info .card-meta { color: var(--text-dark); font-size: 0.75rem; }
+.browser-card .card-info .card-desc { display: block; color: var(--text-dim); font-size: 0.75rem; margin-top: 0.15rem; line-height: 1.3; }
 .browser-card.already-added { opacity: 0.45; }
 .browser-card.already-added .btn { pointer-events: none; }
+
+/* Class Features */
+.class-features-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.class-feature-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.6rem 0.75rem; }
+.class-feature-item .cf-name { font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+.class-feature-item .cf-desc { color: var(--text-dim); font-size: 0.85rem; margin-top: 0.2rem; }
+.hope-feature-item { background: rgba(240,192,64,0.08); border: 1px solid var(--hope-fill); border-radius: var(--radius-sm); padding: 0.6rem 0.75rem; }
+.hope-feature-item .cf-name { font-weight: 600; color: var(--hope-fill); font-size: 0.9rem; }
+.hope-feature-item .cf-cost { font-size: 0.75rem; color: var(--hope-fill); opacity: 0.8; margin-left: 0.5rem; }
+.hope-feature-item .cf-desc { color: var(--text-dim); font-size: 0.85rem; margin-top: 0.2rem; }
+.subclass-feature-item { background: rgba(123,94,167,0.1); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 0.6rem 0.75rem; }
+.subclass-feature-item .cf-name { font-weight: 600; color: var(--accent-light); font-size: 0.9rem; }
+.subclass-feature-item .cf-tier { font-size: 0.7rem; color: var(--text-dark); text-transform: uppercase; margin-left: 0.5rem; }
+.subclass-feature-item .cf-desc { color: var(--text-dim); font-size: 0.85rem; margin-top: 0.2rem; }
+.spellcast-badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 10px; margin-left: 0.5rem; }
+
+/* Background & Connection Questions */
+.questions-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+.question-item label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.3rem; display: block; text-transform: none; letter-spacing: 0; }
+.question-item textarea { min-height: 60px; }
+
+/* Gold & Inventory */
+.gold-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.gold-row { gap: 0.75rem; }
+.inventory-area { width: 100%; min-height: 80px; }
+
+
+/* Advancement Tracking */
+.advancement-level { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; margin-bottom: 0.5rem; }
+.advancement-level:last-child { margin-bottom: 0; }
+.advancement-level-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.advancement-level-header .level-label { font-weight: 600; color: var(--primary); font-size: 0.85rem; }
+.advancement-level-header .slots-remaining { font-size: 0.75rem; color: var(--text-dim); }
+.advancement-option { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.85rem; }
+.advancement-option input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--accent); }
+.advancement-option.disabled { opacity: 0.4; }
+.advancement-option .slot-cost { font-size: 0.7rem; color: var(--text-dark); }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -484,6 +522,17 @@ label {
     </div>
   </div>
 
+  <!-- Class Features -->
+  <div class="section full-width" data-section="classfeatures" id="classFeaturesSection" style="display:none">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Class Features & Abilities</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div id="classFeaturesContent"></div>
+    </div>
+  </div>
+
   <!-- Traits -->
   <div class="section" data-section="traits">
     <div class="section-header" onclick="toggleSection(this)">
@@ -547,29 +596,38 @@ label {
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Hope & Fear -->
-  <div class="section" data-section="hopefear">
-    <div class="section-header" onclick="toggleSection(this)">
-      <h2>Hope & Fear</h2>
-      <span class="chevron">&#9660;</span>
-    </div>
-    <div class="section-body">
-      <div class="hope-fear-row">
-        <div class="counter-group">
-          <span class="counter-label hope">Hope</span>
-          <button class="counter-btn" onclick="adjustCounter('hope',-1)">-</button>
-          <span class="counter-value" id="hopeValue">0</span>
-          <button class="counter-btn" onclick="adjustCounter('hope',1)">+</button>
+      <div class="combat-row" style="margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+        <div class="hope-fear-row">
+          <div class="counter-group">
+            <span class="counter-label hope">Hope</span>
+            <button class="counter-btn" onclick="adjustCounter('hope',-1)">-</button>
+            <span class="counter-value" id="hopeValue">0</span>
+            <button class="counter-btn" onclick="adjustCounter('hope',1)">+</button>
+          </div>
+          <div class="counter-group">
+            <span class="counter-label fear">Fear</span>
+            <button class="counter-btn" onclick="adjustCounter('fear',-1)">-</button>
+            <span class="counter-value" id="fearValue">0</span>
+            <button class="counter-btn" onclick="adjustCounter('fear',1)">+</button>
+          </div>
         </div>
-        <div class="counter-group">
-          <span class="counter-label fear">Fear</span>
-          <button class="counter-btn" onclick="adjustCounter('fear',-1)">-</button>
-          <span class="counter-value" id="fearValue">0</span>
-          <button class="counter-btn" onclick="adjustCounter('fear',1)">+</button>
+      </div>
+      <div style="margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
+          <div class="field-group" style="flex:3;min-width:180px">
+            <label>Armor</label>
+            <select id="armorSelect"><option value="">-- Select Armor --</option></select>
+          </div>
+          <div class="field-group" style="flex:1;min-width:60px">
+            <label>Score</label>
+            <input type="number" id="armorScoreDisplay" readonly style="color:var(--primary);font-weight:600">
+          </div>
+          <div class="field-group" style="flex:1;min-width:60px">
+            <label>Slots</label>
+            <input type="number" id="armorSlotsDisplay" readonly style="color:var(--primary);font-weight:600">
+          </div>
         </div>
+        <div id="armorFeatureDisplay" style="color:var(--text-dim);font-size:0.8rem;font-style:italic"></div>
       </div>
     </div>
   </div>
@@ -581,45 +639,36 @@ label {
       <span class="chevron">&#9660;</span>
     </div>
     <div class="section-body">
+      <label style="margin-bottom:0.4rem">Gold</label>
+      <div class="gold-row">
+        <div class="counter-group">
+          <span class="counter-label" style="color:var(--primary)">Handfuls</span>
+          <button class="counter-btn" onclick="adjustGold('handfuls',-1)">-</button>
+          <span class="counter-value" id="goldHandfuls">0</span>
+          <button class="counter-btn" onclick="adjustGold('handfuls',1)">+</button>
+        </div>
+        <div class="counter-group">
+          <span class="counter-label" style="color:var(--primary)">Bags</span>
+          <button class="counter-btn" onclick="adjustGold('bags',-1)">-</button>
+          <span class="counter-value" id="goldBags">0</span>
+          <button class="counter-btn" onclick="adjustGold('bags',1)">+</button>
+        </div>
+        <div class="counter-group">
+          <span class="counter-label" style="color:var(--primary)">Chests</span>
+          <button class="counter-btn" onclick="adjustGold('chests',-1)">-</button>
+          <span class="counter-value" id="goldChests">0</span>
+          <button class="counter-btn" onclick="adjustGold('chests',1)">+</button>
+        </div>
+      </div>
+      <div class="field-group" style="margin-bottom:0.75rem">
+        <label>Inventory</label>
+        <textarea class="inventory-area" id="inventoryArea" placeholder="Misc items, supplies, trinkets..." oninput="updateInventory(this.value)"></textarea>
+      </div>
+      <label style="margin-bottom:0.4rem">Weapons</label>
       <div id="weaponsList"></div>
       <div class="add-row">
-        <button class="btn btn-sm" onclick="addWeapon()">+ Add Weapon / Item</button>
+        <button class="btn btn-sm" onclick="addWeapon()">+ Add Weapon</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Active Armor -->
-  <div class="section" data-section="activearmor">
-    <div class="section-header" onclick="toggleSection(this)">
-      <h2>Active Armor</h2>
-      <span class="chevron">&#9660;</span>
-    </div>
-    <div class="section-body">
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
-        <div class="field-group" style="flex:3;min-width:180px">
-          <label>Armor</label>
-          <select id="armorSelect"><option value="">-- Select Armor --</option></select>
-        </div>
-        <div class="field-group" style="flex:1;min-width:60px">
-          <label>Score</label>
-          <input type="number" id="armorScoreDisplay" readonly style="color:var(--primary);font-weight:600">
-        </div>
-        <div class="field-group" style="flex:1;min-width:60px">
-          <label>Slots</label>
-          <input type="number" id="armorSlotsDisplay" readonly style="color:var(--primary);font-weight:600">
-        </div>
-      </div>
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.5rem">
-        <div class="field-group">
-          <label>Major Threshold</label>
-          <input type="number" id="armorMajorDisplay" readonly style="width:70px;color:var(--primary);font-weight:600">
-        </div>
-        <div class="field-group">
-          <label>Severe Threshold</label>
-          <input type="number" id="armorSevereDisplay" readonly style="width:70px;color:var(--primary);font-weight:600">
-        </div>
-      </div>
-      <div id="armorFeatureDisplay" style="color:var(--text-dim);font-size:0.8rem;font-style:italic"></div>
     </div>
   </div>
 
@@ -634,6 +683,17 @@ label {
       <div class="add-row">
         <button class="btn btn-sm" onclick="addExperience()">+ Add Experience</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Tier Advancement -->
+  <div class="section full-width" data-section="advancement" id="advancementSection" style="display:none">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Tier Advancement</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div id="advancementContent"></div>
     </div>
   </div>
 
@@ -671,6 +731,17 @@ label {
     </div>
   </div>
 
+  <!-- Background & Connections -->
+  <div class="section full-width" data-section="background" id="backgroundSection" style="display:none">
+    <div class="section-header" onclick="toggleSection(this)">
+      <h2>Background & Connections</h2>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div id="backgroundContent"></div>
+    </div>
+  </div>
+
   <!-- Notes -->
   <div class="section full-width" data-section="notes">
     <div class="section-header" onclick="toggleSection(this)">
@@ -698,133 +769,272 @@ const DAGGERHEART_DATA = {
   },
   communities: ['Highborne','Loreborne','Orderborne','Ridgeborne','Seaborne','Slyborne','Underborne','Wanderborne','Wildborne'],
   classes: {
-    Bard:       { domains: ['Grace','Codex'], subclasses: ['Troubadour','Wordsmith'], evasion: 10, hp: 5 },
-    Druid:      { domains: ['Sage','Arcana'], subclasses: ['Warden of Renewal','Warden of the Elements'], evasion: 10, hp: 6 },
-    Guardian:   { domains: ['Valor','Blade'], subclasses: ['Stalwart','Vengeant'], evasion: 9, hp: 7 },
-    Ranger:     { domains: ['Sage','Bone'], subclasses: ['Wayfinder','Beastbound'], evasion: 12, hp: 6 },
-    Rogue:      { domains: ['Midnight','Grace'], subclasses: ['Syndicate','Nightwalker'], evasion: 12, hp: 6 },
-    Seraph:     { domains: ['Splendor','Valor'], subclasses: ['Winged Sentinel','Divine Wielder'], evasion: 9, hp: 7 },
-    Sorcerer:   { domains: ['Arcana','Midnight'], subclasses: ['Elemental Origin','Primal Origin'], evasion: 10, hp: 6 },
-    Warrior:    { domains: ['Blade','Bone'], subclasses: ['Call of the Brave','Call of the Slayer'], evasion: 11, hp: 6 },
-    Wizard:     { domains: ['Codex','Splendor'], subclasses: ['School of Knowledge','School of Stars'], evasion: 11, hp: 5 }
+    Bard:       { domains: ['Grace','Codex'], subclasses: ['Troubadour','Wordsmith'], evasion: 10, hp: 5,
+      suggestedTraits: {agility:0,strength:-1,finesse:+1,instinct:0,presence:+2,knowledge:+1},
+      suggestedArmor: 'Gambeson',
+      suggestedWeapons: [
+        {source:'custom',name:'Rapier',description:'Presence, Melee, d8 phy, Quick',slot:'primary'},
+        {source:'custom',name:'Small Dagger',description:'Finesse, Melee, d8 phy, Paired',slot:'secondary'}
+      ]},
+    Druid:      { domains: ['Sage','Arcana'], subclasses: ['Warden of Renewal','Warden of the Elements'], evasion: 10, hp: 6,
+      suggestedTraits: {agility:+1,strength:0,finesse:+1,instinct:+2,presence:-1,knowledge:0},
+      suggestedArmor: 'Leather',
+      suggestedWeapons: [
+        {source:'custom',name:'Shortstaff',description:'Instinct, Close, d8+1 mag',slot:'primary'},
+        {source:'custom',name:'Round Shield',description:'Strength, Melee, d4 phy, Protective',slot:'secondary'}
+      ]},
+    Guardian:   { domains: ['Valor','Blade'], subclasses: ['Stalwart','Vengeant'], evasion: 9, hp: 7,
+      suggestedTraits: {agility:+1,strength:+2,finesse:-1,instinct:0,presence:+1,knowledge:0},
+      suggestedArmor: 'Chainmail',
+      suggestedWeapons: [
+        {source:'custom',name:'Battleaxe',description:'Strength, Melee, d10+3 phy, Two-Handed',slot:'primary'}
+      ]},
+    Ranger:     { domains: ['Sage','Bone'], subclasses: ['Wayfinder','Beastbound'], evasion: 12, hp: 6,
+      suggestedTraits: {agility:+2,strength:0,finesse:+1,instinct:+1,presence:-1,knowledge:0},
+      suggestedArmor: 'Leather',
+      suggestedWeapons: [
+        {source:'custom',name:'Shortbow',description:'Agility, Far, d6+3 phy, Two-Handed',slot:'primary'}
+      ]},
+    Rogue:      { domains: ['Midnight','Grace'], subclasses: ['Syndicate','Nightwalker'], evasion: 12, hp: 6,
+      suggestedTraits: {agility:+1,strength:-1,finesse:+2,instinct:0,presence:+1,knowledge:0},
+      suggestedArmor: 'Gambeson',
+      suggestedWeapons: [
+        {source:'custom',name:'Dagger',description:'Finesse, Melee, d8+1 phy',slot:'primary'},
+        {source:'custom',name:'Small Dagger',description:'Finesse, Melee, d8 phy, Paired',slot:'secondary'}
+      ]},
+    Seraph:     { domains: ['Splendor','Valor'], subclasses: ['Winged Sentinel','Divine Wielder'], evasion: 9, hp: 7,
+      suggestedTraits: {agility:0,strength:+2,finesse:0,instinct:+1,presence:+1,knowledge:-1},
+      suggestedArmor: 'Chainmail',
+      suggestedWeapons: [
+        {source:'custom',name:'Hallowed Axe',description:'Strength, Melee, d8+1 mag',slot:'primary'},
+        {source:'custom',name:'Round Shield',description:'Strength, Melee, d4 phy, Protective',slot:'secondary'}
+      ]},
+    Sorcerer:   { domains: ['Arcana','Midnight'], subclasses: ['Elemental Origin','Primal Origin'], evasion: 10, hp: 6,
+      suggestedTraits: {agility:0,strength:-1,finesse:+1,instinct:+2,presence:+1,knowledge:0},
+      suggestedArmor: 'Gambeson',
+      suggestedWeapons: [
+        {source:'custom',name:'Dualstaff',description:'Instinct, Far, d6+3 mag, Two-Handed',slot:'primary'}
+      ]},
+    Warrior:    { domains: ['Blade','Bone'], subclasses: ['Call of the Brave','Call of the Slayer'], evasion: 11, hp: 6,
+      suggestedTraits: {agility:+2,strength:+1,finesse:0,instinct:+1,presence:-1,knowledge:0},
+      suggestedArmor: 'Chainmail',
+      suggestedWeapons: [
+        {source:'custom',name:'Longsword',description:'Agility, Melee, d8+3 phy, Two-Handed',slot:'primary'}
+      ]},
+    Wizard:     { domains: ['Codex','Splendor'], subclasses: ['School of Knowledge','School of Stars'], evasion: 11, hp: 5,
+      suggestedTraits: {agility:-1,strength:0,finesse:0,instinct:+1,presence:+1,knowledge:+2},
+      suggestedArmor: 'Leather',
+      suggestedWeapons: [
+        {source:'custom',name:'Greatstaff',description:'Knowledge, Very Far, d6 mag, Two-Handed, Powerful',slot:'primary'}
+      ]}
   },
   domainCards: {
     Arcana: [
-      {name:'Arcane Volley',level:1,type:'Ability'},{name:'Channel Elements',level:1,type:'Ability'},
-      {name:'Elemental Burst',level:1,type:'Ability'},{name:'Magic Torrent',level:1,type:'Ability'},
-      {name:'Arcane Armor',level:2,type:'Ability'},{name:'Counterspell',level:2,type:'Ability'},
-      {name:'Illusory Disguise',level:2,type:'Ability'},{name:'Overcharge',level:2,type:'Ability'},
-      {name:'Arcane Sight',level:3,type:'Ability'},{name:'Displacement',level:3,type:'Ability'},
-      {name:'Elemental Wall',level:3,type:'Ability'},{name:'Thunderstrike',level:3,type:'Ability'},
-      {name:'Blink',level:4,type:'Ability'},{name:'Chain Lightning',level:4,type:'Ability'},
-      {name:'Shatter',level:4,type:'Ability'},{name:'Arcane Storm',level:5,type:'Ability'},
-      {name:'Elemental Form',level:5,type:'Ability'},{name:'Meteor',level:6,type:'Ability'},
-      {name:'Time Stop',level:7,type:'Ability'},{name:'Arcanist',level:1,type:'Passive'},
-      {name:'Mana Well',level:3,type:'Passive'}
+      {name:'Arcane Volley',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Far range. On success, deal d8+Spellcast magic damage.'},
+      {name:'Channel Elements',level:1,type:'Ability',desc:'Mark a Stress to choose fire, ice, or lightning. Until your next rest, your spellcast attacks deal that element type and gain +1 damage.'},
+      {name:'Elemental Burst',level:1,type:'Ability',desc:'Spend a Hope. Make a Spellcast Roll against all targets in Close range. On success, deal d6+Spellcast magic damage.'},
+      {name:'Magic Torrent',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Very Far range. On success, deal d6+Spellcast magic damage.'},
+      {name:'Arcane Armor',level:2,type:'Ability',desc:'Spend a Hope to give yourself or an ally within Close range temporary armor equal to your Spellcast trait until your next rest.'},
+      {name:'Counterspell',level:2,type:'Ability',desc:'Spend a Hope. When an adversary within Far range casts a spell, make a Spellcast Roll against their Difficulty. On success, negate the spell.'},
+      {name:'Illusory Disguise',level:2,type:'Ability',desc:'Spend a Hope. Make a Spellcast Roll (12). On success, disguise yourself or a willing target as another creature of similar size for one hour.'},
+      {name:'Overcharge',level:2,type:'Ability',desc:'When you deal magic damage with a spell, you can mark a Stress to add an extra d8 to the damage.'},
+      {name:'Arcane Sight',level:3,type:'Ability',desc:'Spend a Hope. For one hour, see magical auras, hidden magical traps, and invisible creatures within Far range.'},
+      {name:'Displacement',level:3,type:'Ability',desc:'Spend a Hope. Teleport yourself or a willing creature you can see within Far range to another location within Far range.'},
+      {name:'Elemental Wall',level:3,type:'Ability',desc:'Spend a Hope. Create a wall of your chosen element within Far range. Creatures passing through take d8 magic damage.'},
+      {name:'Thunderstrike',level:3,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against all targets in a Close area within Far range. On success, deal 2d8+Spellcast magic damage.'},
+      {name:'Blink',level:4,type:'Ability',desc:'Spend a Hope. Until your next short rest, as a reaction when attacked, teleport to a spot within Close range and the attack misses.'},
+      {name:'Chain Lightning',level:4,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target within Far range. On success, deal 2d10+Spellcast lightning damage, then it jumps to up to 2 additional targets.'},
+      {name:'Shatter',level:4,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target within Far range. On success, deal 3d8+Spellcast magic damage and destroy non-magical objects.'},
+      {name:'Arcane Storm',level:5,type:'Ability',desc:'Spend 3 Hope. Create a magical storm in a Far area. All enemies in the area take 3d10+Spellcast magic damage.'},
+      {name:'Elemental Form',level:5,type:'Ability',desc:'Spend 3 Hope. Transform into a living elemental for one scene. Gain immunity to your element, flight, and +2 to Spellcast.'},
+      {name:'Meteor',level:6,type:'Ability',desc:'Spend 4 Hope. Call down a meteor on a point within Very Far range. All creatures in Close range take 4d12+Spellcast magic damage.'},
+      {name:'Time Stop',level:7,type:'Ability',desc:'Spend 5 Hope. Freeze time for all other creatures for 2 rounds. You can move and act freely.'},
+      {name:'Arcanist',level:1,type:'Passive',desc:'When you roll a 6 on a damage die while dealing magic damage, you can reroll it and add both results.'},
+      {name:'Mana Well',level:3,type:'Passive',desc:'Once per long rest, regain a spent domain card ability.'}
     ],
     Blade: [
-      {name:'Aggressive Strike',level:1,type:'Ability'},{name:'Deflect',level:1,type:'Ability'},
-      {name:'Power Strike',level:1,type:'Ability'},{name:'Whirlwind',level:1,type:'Ability'},
-      {name:'Battle Cry',level:2,type:'Ability'},{name:'Cleave',level:2,type:'Ability'},
-      {name:'Fortify',level:2,type:'Ability'},{name:'Shield Bash',level:2,type:'Ability'},
-      {name:'Blade Storm',level:3,type:'Ability'},{name:'Challenge',level:3,type:'Ability'},
-      {name:'Iron Will',level:3,type:'Ability'},{name:'Riposte',level:3,type:'Ability'},
-      {name:'Devastating Blow',level:4,type:'Ability'},{name:'Hold the Line',level:4,type:'Ability'},
-      {name:'Unstoppable',level:4,type:'Ability'},{name:'Executioner',level:5,type:'Ability'},
-      {name:'Whirlwind of Steel',level:5,type:'Ability'},{name:'Invincible',level:6,type:'Ability'},
-      {name:'Avatar of War',level:7,type:'Ability'},{name:'Blade Mastery',level:1,type:'Passive'},
-      {name:'Warrior Born',level:3,type:'Passive'}
+      {name:'Aggressive Strike',level:1,type:'Ability',desc:'Make an attack. On success, deal weapon damage and push the target back one range band.'},
+      {name:'Deflect',level:1,type:'Ability',desc:'When an attack would hit you, spend a Hope to make a reaction roll using Strength or Agility. On success, reduce damage by your weapon die + Proficiency.'},
+      {name:'Power Strike',level:1,type:'Ability',desc:'Spend a Hope. Make an attack with advantage. On success, deal weapon damage +d8.'},
+      {name:'Whirlwind',level:1,type:'Ability',desc:'Make an attack against all enemies within Melee range. On success, deal weapon damage to each.'},
+      {name:'Battle Cry',level:2,type:'Ability',desc:'Spend a Hope. All allies within Close range gain +1 to their next attack roll.'},
+      {name:'Cleave',level:2,type:'Ability',desc:'When you drop an enemy to 0 HP with a melee attack, immediately make a free attack against another enemy within Melee range.'},
+      {name:'Fortify',level:2,type:'Ability',desc:'Spend a Hope. Until your next rest, your Armor Score increases by +2.'},
+      {name:'Shield Bash',level:2,type:'Ability',desc:'If you have a shield equipped, make an attack. On success, deal d6+Strength damage and the target is Dazed.'},
+      {name:'Blade Storm',level:3,type:'Ability',desc:'Spend 2 Hope. Make three separate attacks against targets within Melee range.'},
+      {name:'Challenge',level:3,type:'Ability',desc:'Spend a Hope. Choose an adversary within Close range. They have disadvantage on attacks against anyone other than you until your next rest.'},
+      {name:'Iron Will',level:3,type:'Ability',desc:'When you would be Frightened or Charmed, spend a Hope to automatically resist the effect.'},
+      {name:'Riposte',level:3,type:'Ability',desc:'When an enemy misses you with a melee attack, you can make a free attack against them.'},
+      {name:'Devastating Blow',level:4,type:'Ability',desc:'Spend 2 Hope. Make an attack. On success, deal weapon damage +2d10. This counts as two severity thresholds higher.'},
+      {name:'Hold the Line',level:4,type:'Ability',desc:'Spend 2 Hope. Until your next rest, enemies that enter Melee range of you must stop moving and you get a free attack against them.'},
+      {name:'Unstoppable',level:4,type:'Ability',desc:'Spend 2 Hope. For the rest of the scene, you can\'t be moved against your will and you ignore difficult terrain.'},
+      {name:'Executioner',level:5,type:'Ability',desc:'Spend 3 Hope. Make an attack against a target below half HP. On success, deal triple weapon damage.'},
+      {name:'Whirlwind of Steel',level:5,type:'Ability',desc:'Spend 3 Hope. Make an attack against all enemies within Close range. On success, deal weapon damage +2d8 to each.'},
+      {name:'Invincible',level:6,type:'Ability',desc:'Spend 4 Hope. For one scene, reduce all incoming damage by half (rounded down).'},
+      {name:'Avatar of War',level:7,type:'Ability',desc:'Spend 5 Hope. For one scene, all your attacks have advantage, deal double damage, and you cannot be killed.'},
+      {name:'Blade Mastery',level:1,type:'Passive',desc:'When you roll maximum on a weapon damage die, add +2 to the total damage.'},
+      {name:'Warrior Born',level:3,type:'Passive',desc:'At the start of each combat, gain temporary HP equal to your Proficiency.'}
     ],
     Bone: [
-      {name:'Animal Companion',level:1,type:'Ability'},{name:'Bone Dart',level:1,type:'Ability'},
-      {name:'Hunter\'s Mark',level:1,type:'Ability'},{name:'Snare',level:1,type:'Ability'},
-      {name:'Beastspeak',level:2,type:'Ability'},{name:'Bonecraft Armor',level:2,type:'Ability'},
-      {name:'Pack Tactics',level:2,type:'Ability'},{name:'Vine Snare',level:2,type:'Ability'},
-      {name:'Feral Strike',level:3,type:'Ability'},{name:'Poison Cloud',level:3,type:'Ability'},
-      {name:'Summon Swarm',level:3,type:'Ability'},{name:'Wild Shape',level:3,type:'Ability'},
-      {name:'Alpha Predator',level:4,type:'Ability'},{name:'Bone Prison',level:4,type:'Ability'},
-      {name:'Nature\'s Wrath',level:4,type:'Ability'},{name:'Dire Form',level:5,type:'Ability'},
-      {name:'Plague',level:5,type:'Ability'},{name:'Apex Predator',level:6,type:'Ability'},
-      {name:'Primeval Storm',level:7,type:'Ability'},{name:'Wild Heart',level:1,type:'Passive'},
-      {name:'Pack Leader',level:3,type:'Passive'}
+      {name:'Animal Companion',level:1,type:'Ability',desc:'Summon a beast companion that acts on your turn and can make attacks dealing d6 damage using your Spellcast trait.'},
+      {name:'Bone Dart',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Far range. On success, deal d8+Spellcast physical damage.'},
+      {name:'Hunter\'s Mark',level:1,type:'Ability',desc:'Spend a Hope. Mark a target you can see. You deal +d4 damage to the marked target and can sense their location.'},
+      {name:'Snare',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Close range. On success, the target is Restrained until they break free.'},
+      {name:'Beastspeak',level:2,type:'Ability',desc:'Spend a Hope. Communicate with animals for one hour; they are friendly toward you.'},
+      {name:'Bonecraft Armor',level:2,type:'Ability',desc:'Spend a Hope. Give yourself or an ally within Close range +2 Armor Score until your next rest.'},
+      {name:'Pack Tactics',level:2,type:'Ability',desc:'When you and an ally are both within Melee range of a target, your attacks against that target have advantage.'},
+      {name:'Vine Snare',level:2,type:'Ability',desc:'Spend a Hope. Make a Spellcast Roll against all targets in a Close area within Far range. On success, targets are Restrained.'},
+      {name:'Feral Strike',level:3,type:'Ability',desc:'Spend a Hope. Make an attack with advantage that deals an additional d8 damage. If the target is below half HP, deal d12 instead.'},
+      {name:'Poison Cloud',level:3,type:'Ability',desc:'Spend 2 Hope. Create a poison cloud in a Close area within Far range. Creatures entering or starting their turn in it take d8 poison damage.'},
+      {name:'Summon Swarm',level:3,type:'Ability',desc:'Spend 2 Hope. Summon a swarm in a Close area. Enemies in the area are Distracted and take d6 damage per turn.'},
+      {name:'Wild Shape',level:3,type:'Ability',desc:'Spend a Hope. Transform into a beast of your tier or lower, gaining its movement and senses but keeping your stats.'},
+      {name:'Alpha Predator',level:4,type:'Ability',desc:'Spend 2 Hope. Your animal companion grows to large size, gaining +d8 damage and double HP for one scene.'},
+      {name:'Bone Prison',level:4,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target within Far range. On success, encase them in bone — they are Restrained and take d10 damage per turn.'},
+      {name:'Nature\'s Wrath',level:4,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against all enemies within Far range. On success, deal 2d8+Spellcast physical damage.'},
+      {name:'Dire Form',level:5,type:'Ability',desc:'Spend 3 Hope. Transform into a dire beast. Gain +3 to Strength and Agility, +d10 damage, and doubled HP for one scene.'},
+      {name:'Plague',level:5,type:'Ability',desc:'Spend 3 Hope. Target a creature within Far range. They and all enemies within Close range take 2d10 poison damage and are Weakened.'},
+      {name:'Apex Predator',level:6,type:'Ability',desc:'Spend 4 Hope. For one scene, you and your companion deal double damage, have advantage on all attacks, and can\'t be Frightened.'},
+      {name:'Primeval Storm',level:7,type:'Ability',desc:'Spend 5 Hope. Summon a primeval storm. All enemies within Very Far range take 4d10 physical damage and are Prone.'},
+      {name:'Wild Heart',level:1,type:'Passive',desc:'You can sense the presence and general mood of animals and beasts within Far range.'},
+      {name:'Pack Leader',level:3,type:'Passive',desc:'Your animal companion gains +2 to attack rolls and +1 Armor Score.'}
     ],
     Codex: [
-      {name:'Arcane Record',level:1,type:'Ability'},{name:'Guided Strike',level:1,type:'Ability'},
-      {name:'Ink Bolt',level:1,type:'Ability'},{name:'Translate',level:1,type:'Ability'},
-      {name:'Comprehend Languages',level:2,type:'Ability'},{name:'Glyph of Warding',level:2,type:'Ability'},
-      {name:'Identify',level:2,type:'Ability'},{name:'Runic Shield',level:2,type:'Ability'},
-      {name:'Dispel Magic',level:3,type:'Ability'},{name:'Lore Master',level:3,type:'Ability'},
-      {name:'Scrying',level:3,type:'Ability'},{name:'Sigil of Binding',level:3,type:'Ability'},
-      {name:'Mass Translate',level:4,type:'Ability'},{name:'Power Word',level:4,type:'Ability'},
-      {name:'True Name',level:4,type:'Ability'},{name:'Omniglot',level:5,type:'Ability'},
-      {name:'Seal',level:5,type:'Ability'},{name:'Codex of Ages',level:6,type:'Ability'},
-      {name:'Rewrite Reality',level:7,type:'Ability'},{name:'Scholar',level:1,type:'Passive'},
-      {name:'Living Library',level:3,type:'Passive'}
+      {name:'Arcane Record',level:1,type:'Ability',desc:'Spend a Hope. You perfectly record and recall everything you see and hear for one hour.'},
+      {name:'Guided Strike',level:1,type:'Ability',desc:'Spend a Hope. An ally within Far range adds your Knowledge trait to their next attack roll.'},
+      {name:'Ink Bolt',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Far range. On success, deal d8+Spellcast magic damage.'},
+      {name:'Translate',level:1,type:'Ability',desc:'Spend a Hope. You can read and understand any written language for one hour.'},
+      {name:'Comprehend Languages',level:2,type:'Ability',desc:'Spend a Hope. You and allies within Close range can understand all spoken languages for one hour.'},
+      {name:'Glyph of Warding',level:2,type:'Ability',desc:'Spend a Hope. Place a magical glyph on a surface. When triggered, it deals d10+Spellcast magic damage.'},
+      {name:'Identify',level:2,type:'Ability',desc:'Spend a Hope. Touch an object to learn its magical properties, history, and how to use it.'},
+      {name:'Runic Shield',level:2,type:'Ability',desc:'Spend a Hope. Create a runic barrier on yourself or an ally within Close range that absorbs the next d10+Spellcast damage.'},
+      {name:'Dispel Magic',level:3,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll (14). On success, end one magical effect or spell within Far range.'},
+      {name:'Lore Master',level:3,type:'Ability',desc:'Spend a Hope. Ask the GM one question about a creature, object, or location. They must answer truthfully.'},
+      {name:'Scrying',level:3,type:'Ability',desc:'Spend 2 Hope. Observe a creature or location you know for up to 10 minutes from any distance.'},
+      {name:'Sigil of Binding',level:3,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target within Close range. On success, the target cannot use magical abilities for one minute.'},
+      {name:'Mass Translate',level:4,type:'Ability',desc:'Spend 2 Hope. All creatures within Far range can understand all languages for one hour.'},
+      {name:'Power Word',level:4,type:'Ability',desc:'Spend 2 Hope. Speak a word of power dealing 2d10+Spellcast magic damage to a target within Far range — no roll required.'},
+      {name:'True Name',level:4,type:'Ability',desc:'Spend 2 Hope. If you know a creature\'s true name, they have disadvantage on all rolls against you for one scene.'},
+      {name:'Omniglot',level:5,type:'Ability',desc:'Spend 3 Hope. You permanently learn to speak, read, and write any language you encounter.'},
+      {name:'Seal',level:5,type:'Ability',desc:'Spend 3 Hope. Seal a door, container, or passage with an arcane lock. Only you or a Spellcast Roll (18) can open it.'},
+      {name:'Codex of Ages',level:6,type:'Ability',desc:'Spend 4 Hope. Consult the Codex of Ages to learn any piece of information about the past, present, or likely future.'},
+      {name:'Rewrite Reality',level:7,type:'Ability',desc:'Spend 5 Hope. Alter one aspect of reality within Far range. The change lasts for one scene.'},
+      {name:'Scholar',level:1,type:'Passive',desc:'When you make a roll using Knowledge, you can treat a result of 5 or lower on a Duality Die as a 6.'},
+      {name:'Living Library',level:3,type:'Passive',desc:'Your vault capacity increases by 2. You can swap one loadout card with a vault card during a short rest.'}
     ],
     Grace: [
-      {name:'Charm',level:1,type:'Ability'},{name:'Feather Step',level:1,type:'Ability'},
-      {name:'Inspire',level:1,type:'Ability'},{name:'Tumble',level:1,type:'Ability'},
-      {name:'Dazzle',level:2,type:'Ability'},{name:'Graceful Exit',level:2,type:'Ability'},
-      {name:'Soothing Word',level:2,type:'Ability'},{name:'Vanish',level:2,type:'Ability'},
-      {name:'Dance of Blades',level:3,type:'Ability'},{name:'Enthrall',level:3,type:'Ability'},
-      {name:'Group Invisibility',level:3,type:'Ability'},{name:'Rally',level:3,type:'Ability'},
-      {name:'Dominate',level:4,type:'Ability'},{name:'Miracle Step',level:4,type:'Ability'},
-      {name:'Wind Walk',level:4,type:'Ability'},{name:'Captivate',level:5,type:'Ability'},
-      {name:'Mass Charm',level:5,type:'Ability'},{name:'Time Skip',level:6,type:'Ability'},
-      {name:'Fate Weaver',level:7,type:'Ability'},{name:'Light Footed',level:1,type:'Passive'},
-      {name:'Effortless',level:3,type:'Passive'}
+      {name:'Charm',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target\'s Difficulty within Close range. On success, the target treats you as a trusted friend for one minute.'},
+      {name:'Feather Step',level:1,type:'Ability',desc:'Spend a Hope. Until your next rest, you move silently, ignore difficult terrain, and leave no tracks.'},
+      {name:'Inspire',level:1,type:'Ability',desc:'Spend a Hope. An ally within Close range gains +2 to their next action roll.'},
+      {name:'Tumble',level:1,type:'Ability',desc:'As a reaction when targeted by an attack, make an Agility roll. On success, move to a spot within Close range and the attack misses.'},
+      {name:'Dazzle',level:2,type:'Ability',desc:'Spend a Hope. Make a Spellcast Roll against all enemies in Close range. On success, they are Dazed until end of next turn.'},
+      {name:'Graceful Exit',level:2,type:'Ability',desc:'Spend a Hope. You and up to two allies within Close range can immediately move one range band without triggering reactions.'},
+      {name:'Soothing Word',level:2,type:'Ability',desc:'Spend a Hope. An ally within Close range clears a Stress or removes the Frightened condition.'},
+      {name:'Vanish',level:2,type:'Ability',desc:'Spend a Hope. You become Hidden until you attack or take damage.'},
+      {name:'Dance of Blades',level:3,type:'Ability',desc:'Spend 2 Hope. Make an attack against a target. On success, deal weapon damage +d10 and move to any spot within Close range.'},
+      {name:'Enthrall',level:3,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against all enemies within Close range. On success, they can take no actions on their next turn.'},
+      {name:'Group Invisibility',level:3,type:'Ability',desc:'Spend 2 Hope. You and up to 3 allies within Close range become invisible for one minute or until attacking.'},
+      {name:'Rally',level:3,type:'Ability',desc:'Spend 2 Hope. All allies within Far range clear one Stress and gain +1 to their next action roll.'},
+      {name:'Dominate',level:4,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target within Close range. On success, you control their next action.'},
+      {name:'Miracle Step',level:4,type:'Ability',desc:'Spend 2 Hope. Teleport yourself and up to 3 willing creatures within Close range to a location within Very Far range.'},
+      {name:'Wind Walk',level:4,type:'Ability',desc:'Spend 2 Hope. You and allies within Close range gain flight for one scene.'},
+      {name:'Captivate',level:5,type:'Ability',desc:'Spend 3 Hope. All enemies within Far range must make an Instinct roll or be Charmed by you for one scene.'},
+      {name:'Mass Charm',level:5,type:'Ability',desc:'Spend 3 Hope. All creatures within Far range treat you as a trusted ally for one hour.'},
+      {name:'Time Skip',level:6,type:'Ability',desc:'Spend 4 Hope. Skip forward in time by up to 1 hour, arriving at the same location unharmed.'},
+      {name:'Fate Weaver',level:7,type:'Ability',desc:'Spend 5 Hope. Choose an ally. Their next action automatically succeeds with a critical result.'},
+      {name:'Light Footed',level:1,type:'Passive',desc:'You have advantage on rolls to move silently, balance, or avoid traps.'},
+      {name:'Effortless',level:3,type:'Passive',desc:'Once per short rest, you can reroll a failed Agility or Presence roll.'}
     ],
     Midnight: [
-      {name:'Backstab',level:1,type:'Ability'},{name:'Cloak of Shadows',level:1,type:'Ability'},
-      {name:'Shadow Bolt',level:1,type:'Ability'},{name:'Smoke Bomb',level:1,type:'Ability'},
-      {name:'Dark Vision',level:2,type:'Ability'},{name:'Poison Blade',level:2,type:'Ability'},
-      {name:'Shadow Step',level:2,type:'Ability'},{name:'Silence',level:2,type:'Ability'},
-      {name:'Assassinate',level:3,type:'Ability'},{name:'Creeping Darkness',level:3,type:'Ability'},
-      {name:'Shadow Clone',level:3,type:'Ability'},{name:'Umbral Snare',level:3,type:'Ability'},
-      {name:'Death Mark',level:4,type:'Ability'},{name:'Shadow Gate',level:4,type:'Ability'},
-      {name:'Void Strike',level:4,type:'Ability'},{name:'Eclipse',level:5,type:'Ability'},
-      {name:'Shadow Army',level:5,type:'Ability'},{name:'Nightfall',level:6,type:'Ability'},
-      {name:'Eternal Shadow',level:7,type:'Ability'},{name:'Shadow Born',level:1,type:'Passive'},
-      {name:'One with Night',level:3,type:'Passive'}
+      {name:'Backstab',level:1,type:'Ability',desc:'When you attack from Hidden, deal an extra d6 damage and the target is Vulnerable until end of next turn.'},
+      {name:'Cloak of Shadows',level:1,type:'Ability',desc:'Spend a Hope. You are Hidden in dim light or darkness until you attack, take damage, or enter bright light.'},
+      {name:'Shadow Bolt',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Far range. On success, deal d8+Spellcast magic damage.'},
+      {name:'Smoke Bomb',level:1,type:'Ability',desc:'Create a cloud of smoke in Close range. All creatures in the area are Hidden from creatures outside it.'},
+      {name:'Dark Vision',level:2,type:'Ability',desc:'Spend a Hope. You and allies within Close range can see in complete darkness for one hour.'},
+      {name:'Poison Blade',level:2,type:'Ability',desc:'Spend a Hope. Your weapon deals an extra d4 poison damage on each hit until your next rest.'},
+      {name:'Shadow Step',level:2,type:'Ability',desc:'Spend a Hope. Teleport from one shadow to another within Far range.'},
+      {name:'Silence',level:2,type:'Ability',desc:'Spend a Hope. Create a zone of silence in Close range. No sound can enter or leave the area for one minute.'},
+      {name:'Assassinate',level:3,type:'Ability',desc:'Spend 2 Hope. When you attack a target that is unaware of you, deal triple damage.'},
+      {name:'Creeping Darkness',level:3,type:'Ability',desc:'Spend 2 Hope. Magical darkness fills a Close area within Far range. Only you can see in it; enemies are Blinded.'},
+      {name:'Shadow Clone',level:3,type:'Ability',desc:'Spend 2 Hope. Create a shadow duplicate of yourself that can move and act as a distraction but deals no damage.'},
+      {name:'Umbral Snare',level:3,type:'Ability',desc:'Spend a Hope. Make a Spellcast Roll against a target within Far range. On success, shadow tendrils Restrain them.'},
+      {name:'Death Mark',level:4,type:'Ability',desc:'Spend 2 Hope. Mark a target. For one scene, all attacks against the marked target deal +d8 damage.'},
+      {name:'Shadow Gate',level:4,type:'Ability',desc:'Spend 2 Hope. Create a portal between two shadows within Very Far range. Creatures can pass through for one minute.'},
+      {name:'Void Strike',level:4,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target. On success, deal 3d8+Spellcast magic damage and silence them for one turn.'},
+      {name:'Eclipse',level:5,type:'Ability',desc:'Spend 3 Hope. Block out all light within Very Far range for one scene. You and allies see normally; enemies are Blinded.'},
+      {name:'Shadow Army',level:5,type:'Ability',desc:'Spend 3 Hope. Summon shadow warriors that fight for you for one scene, each dealing d8 damage per turn.'},
+      {name:'Nightfall',level:6,type:'Ability',desc:'Spend 4 Hope. Plunge a massive area into magical night. Enemies take 2d10 damage per turn and are Frightened.'},
+      {name:'Eternal Shadow',level:7,type:'Ability',desc:'Spend 5 Hope. Become a living shadow for one scene — immune to physical damage, able to pass through solid objects, and dealing double magic damage.'},
+      {name:'Shadow Born',level:1,type:'Passive',desc:'You have advantage on Stealth rolls in dim light or darkness.'},
+      {name:'One with Night',level:3,type:'Passive',desc:'While Hidden, your first attack each turn deals +d4 damage.'}
     ],
     Sage: [
-      {name:'Healing Touch',level:1,type:'Ability'},{name:'Nature\'s Grasp',level:1,type:'Ability'},
-      {name:'Purify',level:1,type:'Ability'},{name:'Speak with Nature',level:1,type:'Ability'},
-      {name:'Barkskin',level:2,type:'Ability'},{name:'Entangle',level:2,type:'Ability'},
-      {name:'Restoration',level:2,type:'Ability'},{name:'Wild Growth',level:2,type:'Ability'},
-      {name:'Greater Healing',level:3,type:'Ability'},{name:'Lightning Strike',level:3,type:'Ability'},
-      {name:'Stone Wall',level:3,type:'Ability'},{name:'Wind Gust',level:3,type:'Ability'},
-      {name:'Mass Heal',level:4,type:'Ability'},{name:'Earthquake',level:4,type:'Ability'},
-      {name:'Tidal Wave',level:4,type:'Ability'},{name:'Regeneration',level:5,type:'Ability'},
-      {name:'Storm Call',level:5,type:'Ability'},{name:'Tree of Life',level:6,type:'Ability'},
-      {name:'Nature\'s Avatar',level:7,type:'Ability'},{name:'Naturalist',level:1,type:'Passive'},
-      {name:'Deep Roots',level:3,type:'Passive'}
+      {name:'Healing Touch',level:1,type:'Ability',desc:'Spend a Hope. Touch an ally to clear d6 Hit Points they have marked.'},
+      {name:'Nature\'s Grasp',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Close range. On success, vines Restrain them.'},
+      {name:'Purify',level:1,type:'Ability',desc:'Spend a Hope. Remove a poison or disease from a creature you touch.'},
+      {name:'Speak with Nature',level:1,type:'Ability',desc:'Spend a Hope. Communicate with plants and natural features for 10 minutes; they share what they\'ve sensed.'},
+      {name:'Barkskin',level:2,type:'Ability',desc:'Spend a Hope. Give yourself or an ally within Close range +2 Armor Score until your next rest.'},
+      {name:'Entangle',level:2,type:'Ability',desc:'Spend a Hope. Make a Spellcast Roll against all enemies in a Close area within Far range. On success, they are Restrained.'},
+      {name:'Restoration',level:2,type:'Ability',desc:'Spend a Hope. Touch an ally to remove one condition (Dazed, Frightened, Poisoned, Slowed, etc.).'},
+      {name:'Wild Growth',level:2,type:'Ability',desc:'Spend a Hope. Cause plants to grow rapidly in a Close area, creating difficult terrain and providing cover.'},
+      {name:'Greater Healing',level:3,type:'Ability',desc:'Spend 2 Hope. Touch an ally to clear 2d6+Spellcast Hit Points they have marked.'},
+      {name:'Lightning Strike',level:3,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target within Far range. On success, deal 2d8+Spellcast magic damage.'},
+      {name:'Stone Wall',level:3,type:'Ability',desc:'Spend 2 Hope. Create a wall of stone within Far range that provides full cover and has HP equal to 5x your level.'},
+      {name:'Wind Gust',level:3,type:'Ability',desc:'Spend a Hope. Push all creatures in a line within Far range back one range band. They must make an Agility roll or be knocked Prone.'},
+      {name:'Mass Heal',level:4,type:'Ability',desc:'Spend 3 Hope. All allies within Close range clear 2d8+Spellcast marked Hit Points.'},
+      {name:'Earthquake',level:4,type:'Ability',desc:'Spend 3 Hope. Make a Spellcast Roll against all enemies within Far range. On success, deal 2d10+Spellcast and knock them Prone.'},
+      {name:'Tidal Wave',level:4,type:'Ability',desc:'Spend 2 Hope. A wave of water sweeps through a Far area. Enemies take 2d8 damage and are pushed back one range band.'},
+      {name:'Regeneration',level:5,type:'Ability',desc:'Spend 3 Hope. Touch an ally. They regenerate d6 HP at the start of each turn for one scene.'},
+      {name:'Storm Call',level:5,type:'Ability',desc:'Spend 3 Hope. Summon a storm within Very Far range. Enemies take 3d8+Spellcast lightning damage.'},
+      {name:'Tree of Life',level:6,type:'Ability',desc:'Spend 4 Hope. Grow a magical tree. Allies within Close range heal d8 HP per turn and are immune to conditions.'},
+      {name:'Nature\'s Avatar',level:7,type:'Ability',desc:'Spend 5 Hope. Become a nature avatar. Gain +3 to all traits, doubled HP, and all Sage spells cost 1 less Hope.'},
+      {name:'Naturalist',level:1,type:'Passive',desc:'You can identify any natural plant, animal, or material on sight and know its properties.'},
+      {name:'Deep Roots',level:3,type:'Passive',desc:'When you heal an ally, they also clear one Stress.'}
     ],
     Splendor: [
-      {name:'Blessed Strike',level:1,type:'Ability'},{name:'Divine Light',level:1,type:'Ability'},
-      {name:'Guiding Bolt',level:1,type:'Ability'},{name:'Shield of Faith',level:1,type:'Ability'},
-      {name:'Celestial Armor',level:2,type:'Ability'},{name:'Consecrate',level:2,type:'Ability'},
-      {name:'Radiant Burst',level:2,type:'Ability'},{name:'Smite',level:2,type:'Ability'},
-      {name:'Aura of Protection',level:3,type:'Ability'},{name:'Beacon of Hope',level:3,type:'Ability'},
-      {name:'Blinding Light',level:3,type:'Ability'},{name:'Wings of Light',level:3,type:'Ability'},
-      {name:'Divine Judgment',level:4,type:'Ability'},{name:'Holy Fire',level:4,type:'Ability'},
-      {name:'Resurrection',level:4,type:'Ability'},{name:'Celestial Form',level:5,type:'Ability'},
-      {name:'Sunburst',level:5,type:'Ability'},{name:'Divine Intervention',level:6,type:'Ability'},
-      {name:'Apotheosis',level:7,type:'Ability'},{name:'Radiant Soul',level:1,type:'Passive'},
-      {name:'Divine Favor',level:3,type:'Passive'}
+      {name:'Blessed Strike',level:1,type:'Ability',desc:'Spend a Hope. Your next weapon attack deals an extra d6 radiant damage.'},
+      {name:'Divine Light',level:1,type:'Ability',desc:'Spend a Hope. Create bright light in Close range. Undead and fiends in the area take d6 radiant damage.'},
+      {name:'Guiding Bolt',level:1,type:'Ability',desc:'Make a Spellcast Roll against a target within Far range. On success, deal d8+Spellcast radiant damage and the next attack against them has advantage.'},
+      {name:'Shield of Faith',level:1,type:'Ability',desc:'Spend a Hope. Give yourself or an ally within Close range +2 Evasion until your next rest.'},
+      {name:'Celestial Armor',level:2,type:'Ability',desc:'Spend a Hope. Surround an ally within Close range with radiant armor, giving them +3 Armor Score until your next rest.'},
+      {name:'Consecrate',level:2,type:'Ability',desc:'Spend a Hope. Bless a Close area. Allies in the area gain +1 to all rolls; undead and fiends have disadvantage.'},
+      {name:'Radiant Burst',level:2,type:'Ability',desc:'Spend a Hope. Make a Spellcast Roll against all enemies within Close range. On success, deal d8+Spellcast radiant damage.'},
+      {name:'Smite',level:2,type:'Ability',desc:'Spend a Hope. Add 2d6 radiant damage to your next melee weapon attack. Deal 3d6 against undead or fiends.'},
+      {name:'Aura of Protection',level:3,type:'Ability',desc:'Spend 2 Hope. Allies within Close range gain +2 to Evasion and resistance to magic damage until your next rest.'},
+      {name:'Beacon of Hope',level:3,type:'Ability',desc:'Spend 2 Hope. All allies within Far range clear d6 marked Hit Points and gain +1 to their next roll.'},
+      {name:'Blinding Light',level:3,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against all enemies within Close range. On success, they are Blinded until end of next turn.'},
+      {name:'Wings of Light',level:3,type:'Ability',desc:'Spend 2 Hope. Gain radiant wings granting flight until your next rest. While flying, allies below you gain +1 Evasion.'},
+      {name:'Divine Judgment',level:4,type:'Ability',desc:'Spend 2 Hope. Make a Spellcast Roll against a target within Far range. On success, deal 3d8+Spellcast radiant damage — double vs undead.'},
+      {name:'Holy Fire',level:4,type:'Ability',desc:'Spend 2 Hope. Rain holy fire on a Close area within Far range. Enemies take 2d10 radiant damage per turn for 2 turns.'},
+      {name:'Resurrection',level:4,type:'Ability',desc:'Spend 3 Hope and mark 3 Stress. Touch a creature that died within the last minute to restore them to life with 1 HP.'},
+      {name:'Celestial Form',level:5,type:'Ability',desc:'Spend 3 Hope. Transform into a radiant being. Gain flight, +2 to all traits, and your spells deal +d8 damage for one scene.'},
+      {name:'Sunburst',level:5,type:'Ability',desc:'Spend 3 Hope. A burst of sunlight deals 3d10+Spellcast radiant damage to all enemies within Far range. Undead take double.'},
+      {name:'Divine Intervention',level:6,type:'Ability',desc:'Spend 4 Hope. Call upon divine aid. The GM describes a miraculous event that aids your situation.'},
+      {name:'Apotheosis',level:7,type:'Ability',desc:'Spend 5 Hope. Ascend to a divine form for one scene. All allies within Far range are healed fully, and you gain +4 to all traits and doubled damage.'},
+      {name:'Radiant Soul',level:1,type:'Passive',desc:'You emit dim light at will. Undead and fiends within Melee range take 1 radiant damage at the start of each turn.'},
+      {name:'Divine Favor',level:3,type:'Passive',desc:'When you heal an ally, you also gain a Hope.'}
     ],
     Valor: [
-      {name:'Bolster',level:1,type:'Ability'},{name:'Heroic Strike',level:1,type:'Ability'},
-      {name:'Protect',level:1,type:'Ability'},{name:'Taunt',level:1,type:'Ability'},
-      {name:'Adrenaline Rush',level:2,type:'Ability'},{name:'Bulwark',level:2,type:'Ability'},
-      {name:'Inspiring Presence',level:2,type:'Ability'},{name:'Shield Wall',level:2,type:'Ability'},
-      {name:'Defender\'s Stand',level:3,type:'Ability'},{name:'Heroic Leap',level:3,type:'Ability'},
-      {name:'Rally the Fallen',level:3,type:'Ability'},{name:'Unbreakable',level:3,type:'Ability'},
-      {name:'Champion\'s Challenge',level:4,type:'Ability'},{name:'Last Stand',level:4,type:'Ability'},
-      {name:'Valor\'s Edge',level:4,type:'Ability'},{name:'Indomitable',level:5,type:'Ability'},
-      {name:'War Cry',level:5,type:'Ability'},{name:'Legendary Defender',level:6,type:'Ability'},
-      {name:'Paragon',level:7,type:'Ability'},{name:'Courageous Heart',level:1,type:'Passive'},
-      {name:'Unshakeable',level:3,type:'Passive'}
+      {name:'Bolster',level:1,type:'Ability',desc:'Spend a Hope. An ally within Close range gains temporary HP equal to d6+your Presence.'},
+      {name:'Heroic Strike',level:1,type:'Ability',desc:'Make an attack. On success, deal weapon damage and gain a Hope if the target is above your level.'},
+      {name:'Protect',level:1,type:'Ability',desc:'When an ally within Melee range is attacked, spend a Hope as a reaction to take the damage instead.'},
+      {name:'Taunt',level:1,type:'Ability',desc:'Make a Presence roll against a target\'s Difficulty within Close range. On success, the target must attack you on their next turn.'},
+      {name:'Adrenaline Rush',level:2,type:'Ability',desc:'Spend a Hope. Gain an extra action on your turn. After this turn, mark a Stress.'},
+      {name:'Bulwark',level:2,type:'Ability',desc:'Spend a Hope. Until your next rest, you and allies within Melee range gain +1 Armor Score.'},
+      {name:'Inspiring Presence',level:2,type:'Ability',desc:'Spend a Hope. An ally within Close range can immediately make a free action roll with advantage.'},
+      {name:'Shield Wall',level:2,type:'Ability',desc:'Spend a Hope. You and adjacent allies gain +3 Evasion against ranged attacks until your next turn.'},
+      {name:'Defender\'s Stand',level:3,type:'Ability',desc:'Spend 2 Hope. For one scene, you can\'t be moved and allies within Melee range can\'t be targeted by attacks unless you are incapacitated.'},
+      {name:'Heroic Leap',level:3,type:'Ability',desc:'Spend a Hope. Leap to any point within Far range. Make an attack on landing dealing weapon damage +d8 to all enemies in Melee range.'},
+      {name:'Rally the Fallen',level:3,type:'Ability',desc:'Spend 2 Hope. An ally within Close range who has marked all their HP clears d8+Presence Hit Points.'},
+      {name:'Unbreakable',level:3,type:'Ability',desc:'When you would be reduced to 0 HP, spend 2 Hope to stay at 1 HP instead and clear 2 Stress.'},
+      {name:'Champion\'s Challenge',level:4,type:'Ability',desc:'Spend 2 Hope. Challenge a foe within Close range. For one scene, you both deal double damage to each other and can\'t target anyone else.'},
+      {name:'Last Stand',level:4,type:'Ability',desc:'Spend 2 Hope. When below half HP, gain +3 to all attack rolls and deal +d10 damage until your next rest.'},
+      {name:'Valor\'s Edge',level:4,type:'Ability',desc:'Spend 2 Hope. For one scene, your weapon attacks deal an extra d8 damage and you can\'t be Frightened.'},
+      {name:'Indomitable',level:5,type:'Ability',desc:'Spend 3 Hope. For one scene, you automatically succeed on rolls to resist conditions and your Evasion increases by +3.'},
+      {name:'War Cry',level:5,type:'Ability',desc:'Spend 3 Hope. All enemies within Far range must make a Presence roll or be Frightened. Allies gain +2 to attack rolls for one round.'},
+      {name:'Legendary Defender',level:6,type:'Ability',desc:'Spend 4 Hope. For one scene, any damage that would hit allies within Close range hits you instead, and you take half damage.'},
+      {name:'Paragon',level:7,type:'Ability',desc:'Spend 5 Hope. For one scene, you and all allies within Far range gain +3 to all rolls and deal double damage.'},
+      {name:'Courageous Heart',level:1,type:'Passive',desc:'You are immune to the Frightened condition.'},
+      {name:'Unshakeable',level:3,type:'Passive',desc:'When you take damage, gain +1 to your next attack roll.'}
     ]
   },
   armor: [
@@ -867,7 +1077,319 @@ const DAGGERHEART_DATA = {
     {name:'Full Fortified',tier:4,score:4,major:15,severe:40,feature:'Doubled severity reduction'},
     {name:'Veritas Opal',tier:4,score:6,major:13,severe:36,feature:'Lie detection'},
     {name:'Savior Chainmail',tier:4,score:8,major:18,severe:48,feature:'-1 to traits and Evasion',evasionMod:-1}
-  ]
+  ],
+  classFeatures: {
+    Bard: {
+      features: [
+        {name:'Rally',description:'Once per session, describe how you rally the party and give yourself and each of your allies a Rally Die. At level 1, your Rally Die is a d6. A PC can spend their Rally Die to roll it, adding the result to their action roll, reaction roll, damage roll, or to clear a number of Stress equal to the result. At the end of each session, clear all unspent Rally Dice. At level 5, your Rally Die increases to a d8.'}
+      ],
+      hopeFeature: {name:'Make a Scene',cost:3,description:'Spend 3 Hope to temporarily Distract a target within Close range, giving them a \u22122 penalty to their Difficulty.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A romance novel OR a letter never opened\nPlus a spellcasting focus (songbook, journal, etc.)',
+      backgroundQuestions: [
+        'You\'ve always looked up to another bard. Who are they, and why do you idolize them?',
+        'You were in love once. Who did you adore, and how did they hurt you?',
+        'Who from your community taught you to have such confidence in yourself?'
+      ],
+      connectionQuestions: [
+        'What made you realize we were going to be such good friends?',
+        'What do I do that annoys you?',
+        'Why do you grab my hand at night?'
+      ]
+    },
+    Druid: {
+      features: [
+        {name:'Beastform',description:'Mark a Stress to magically transform into a creature of your tier or lower from the Beastform list. You can drop out of this form at any time. While transformed, you can\'t use weapons or cast spells from domain cards, but you can still use other features or abilities. You gain the Beastform\'s features, add their Evasion bonus to yours, and use the trait specified in their statistics for your attack. If you mark your last Hit Point, you automatically drop out of this form.'},
+        {name:'Wildtouch',description:'You can perform harmless, subtle effects that involve nature\u2014such as causing a flower to rapidly grow, summoning a slight gust of wind, or starting a campfire\u2014at will.'}
+      ],
+      hopeFeature: {name:'Evolution',cost:3,description:'Spend 3 Hope to transform into Beastform without marking a Stress. When you do, choose one trait to raise by +1 until you drop out of that Beastform.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A small bag of rocks and bones OR a strange pendant found in the dirt',
+      backgroundQuestions: [
+        'Who has been trying to hunt you down? What do they want from you?',
+        'Who was the first wild animal you bonded with? Why did your bond end?',
+        'Why was the community you grew up in so reliant on nature and its creatures?'
+      ],
+      connectionQuestions: [
+        'What affectionate nickname have you given me?',
+        'What animal do I say you remind me of?',
+        'What did you confide in me that makes me leap into danger for you every time?'
+      ]
+    },
+    Guardian: {
+      features: [
+        {name:'Unstoppable',description:'Once per long rest, you can become Unstoppable. You gain an Unstoppable Die (d4 at level 1, d6 at level 5). Place it starting at 1. After you deal 1+ Hit Points to a target, increase the die value by one. When it exceeds its max or the scene ends, remove it. While Unstoppable: reduce severity of physical damage by one threshold, add the die\'s current value to your damage roll, and you can\'t be Restrained or Vulnerable.'}
+      ],
+      hopeFeature: {name:'Frontline Tank',cost:3,description:'Spend 3 Hope to clear 2 Armor Slots.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A totem from your mentor OR a secret key',
+      backgroundQuestions: [
+        'You consider an aspect of yourself to be a weakness. What is it, and how has it affected you?',
+        'You\'ve been tasked with protecting something important and delivering it somewhere dangerous. What is it, and where does it need to go?',
+        'Who from your community did you fail to protect, and why do you still think of them?'
+      ],
+      connectionQuestions: [
+        'What lie have you told me about yourself that I absolutely believe?',
+        'What small gift did you give me that you notice I always carry with me?',
+        'How did I save your life the first time we met?'
+      ]
+    },
+    Ranger: {
+      features: [
+        {name:'Ranger\'s Focus',description:'Spend a Hope and make an attack against a target. On a success, deal your attack\'s normal damage and temporarily make the target your Focus. Until this feature ends or you choose a different Focus, you gain: you know precisely what direction they are in; when you deal damage to them, they must mark a Stress; when you fail an attack against them, you can end Ranger\'s Focus to reroll your Duality Dice.'}
+      ],
+      hopeFeature: {name:'Hold Them Off',cost:3,description:'Spend 3 Hope when you succeed on an attack with a weapon to use that same roll against two additional adversaries within range of the attack.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A trophy from your first kill OR a seemingly broken compass',
+      backgroundQuestions: [
+        'You\'ve traveled many dangerous lands, but what is the one place you refuse to go?',
+        'Your first kill almost killed you, too. What was it, and what part of you was never the same after that event?',
+        'A terrible creature hurt your community, and you\'ve vowed to hunt them down. What are they, and what unique trail or sign do they leave behind?'
+      ],
+      connectionQuestions: [
+        'What friendly competition do we have?',
+        'Why do you act differently when we\'re alone than when others are around?',
+        'What threat have you asked me to watch for, and why are you worried about it?'
+      ]
+    },
+    Rogue: {
+      features: [
+        {name:'Cloaked',description:'Any time you would be Hidden, you are instead Cloaked. In addition to the benefits of Hidden, while Cloaked you remain unseen if you are stationary when an adversary moves to where they would normally see you. After you make an attack or end a move within line of sight of an adversary, you are no longer Cloaked.'},
+        {name:'Sneak Attack',description:'When you succeed on an attack while Cloaked or while an ally is within Melee range of your target, add a number of d6s equal to your tier to your damage roll.'}
+      ],
+      hopeFeature: {name:'Rogue\'s Dodge',cost:3,description:'Spend 3 Hope to gain a +2 bonus to your Evasion until the next time an attack succeeds against you. Otherwise, this bonus lasts until your next rest.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A set of forgery tools OR a grappling hook',
+      backgroundQuestions: [
+        'Who from your past were you most sad to say goodbye to?',
+        'You used to have a different life, but you\'ve tried to leave it behind. Who from your past is still chasing you?',
+        'What did you get caught doing that got you exiled from your home community?'
+      ],
+      connectionQuestions: [
+        'What did I recently convince you to do that got us both in trouble?',
+        'What have I discovered about your past that I hold secret from the others?',
+        'Who do you know from my past, and how have they influenced your feelings about me?'
+      ]
+    },
+    Seraph: {
+      features: [
+        {name:'Prayer Dice',description:'At the beginning of each session, roll a number of d4s equal to your subclass\'s Spellcast trait and place them on this sheet. These are your Prayer Dice. You can spend any number of Prayer Dice to aid yourself or an ally within Far range. You can use a spent die\'s value to reduce incoming damage, add to a roll\'s result after the roll is made, or gain Hope equal to the result. At the end of each session, clear all unspent Prayer Dice.'}
+      ],
+      hopeFeature: {name:'Life Support',cost:3,description:'Spend 3 Hope to clear a Hit Point on an ally within Close range.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A bundle of offerings OR a sigil of your god',
+      backgroundQuestions: [
+        'In what strange or unique way do you communicate with your god?',
+        'How did your appearance change after taking your oath?',
+        'Which god did you devote yourself to? What incredible feat did they perform for you in a moment of desperation?'
+      ],
+      connectionQuestions: [
+        'What promise did you make me agree to, should you die on the battlefield?',
+        'Why do you ask me so many questions about my god?',
+        'You\'ve told me to protect one member of our party above all others, even yourself. Who are they and why?'
+      ]
+    },
+    Sorcerer: {
+      features: [
+        {name:'Arcane Sense',description:'You can sense the presence of magical people and objects within Close range.'},
+        {name:'Minor Illusion',description:'Make a Spellcast Roll (10). On a success, you create a minor visual illusion no larger than yourself within Close range. This illusion is convincing to anyone at Close range or farther.'},
+        {name:'Channel Raw Power',description:'Once per long rest, you can place a domain card from your loadout into your vault and choose to either: gain Hope equal to the level of the card, or enhance a spell that deals damage, gaining a bonus to your damage roll equal to twice the level of the card.'}
+      ],
+      hopeFeature: {name:'Volatile Magic',cost:3,description:'Spend 3 Hope to reroll any number of your damage dice on an attack that deals magic damage.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A whispering orb OR a family heirloom',
+      backgroundQuestions: [
+        'You have a deep fear you hide from everyone. What is it, and why does it scare you?',
+        'What mentor taught you to control your untamed magic, and why are they no longer able to guide you?',
+        'What did you do that made the people in your community wary of you?'
+      ],
+      connectionQuestions: [
+        'Why do you trust me so deeply?',
+        'What did I do that makes you cautious around me?',
+        'Why do we keep our shared past a secret?'
+      ]
+    },
+    Warrior: {
+      features: [
+        {name:'Attack of Opportunity',description:'When an adversary within Melee range attempts to leave that range, make a reaction roll using a trait of your choice against their Difficulty. Choose one effect on a success, or two if you critically succeed: they can\'t move from where they are; you deal damage to them equal to your primary weapon\'s damage; you move with them.'},
+        {name:'Combat Training',description:'You ignore burden when equipping weapons. When you deal physical damage, you gain a bonus to your damage roll equal to your level.'}
+      ],
+      hopeFeature: {name:'No Mercy',cost:3,description:'Spend 3 Hope to gain a +1 bonus to your attack rolls until your next rest.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: The drawing of a lover OR a sharpening stone',
+      backgroundQuestions: [
+        'What legendary place have you always wanted to visit, and why is it so special?',
+        'Somebody defeated you in battle years ago and left you to die. Who was it, and how did they betray you?',
+        'Who taught you to fight, and why did they stay behind when you left home?'
+      ],
+      connectionQuestions: [
+        'We knew each other long before this party came together. How?',
+        'What mundane task do you usually help me with off the battlefield?',
+        'What fear am I helping you overcome?'
+      ]
+    },
+    Wizard: {
+      features: [
+        {name:'Prestidigitation',description:'You can perform harmless, subtle magical effects at will. For example, you can change an object\'s color, create a smell, light a candle, cause a tiny object to float, illuminate a room, or repair a small object.'},
+        {name:'Strange Patterns',description:'Choose a number between 1 and 12. When you roll that number on a Duality Die, gain a Hope or clear a Stress. You can change this number when you take a long rest.'}
+      ],
+      hopeFeature: {name:'Not This Time',cost:3,description:'Spend 3 Hope to force an adversary within Far range to reroll an attack or damage roll.'},
+      startingItems: 'TAKE: A torch, 50 feet of rope, basic supplies, and a handful of gold\nTHEN CHOOSE BETWEEN: A Minor Health Potion OR a Minor Stamina Potion\nAND EITHER: A book you\'re trying to translate OR a tiny, harmless elemental pet\nPlus a spellcasting focus (large tomes, tarot cards, etc.)',
+      backgroundQuestions: [
+        'You have a powerful rival. Who are they, and why are you so determined to defeat them?',
+        'You\'ve spent your life searching for a book or object of great significance. What is it, and why is it so important to you?',
+        'What responsibilities did your community once count on you for? How did you let them down?'
+      ],
+      connectionQuestions: [
+        'What favor have I asked of you that you\'re not sure you can fulfill?',
+        'What weird hobby or strange fascination do we both share?',
+        'What secret about yourself have you entrusted only to me?'
+      ]
+    }
+  },
+  subclassFeatures: {
+    Troubadour: {
+      spellcastTrait:'Presence',
+      foundation:{name:'Inspiring Ballad',description:'When you use Bardic Performance, you can choose one ally in range to gain temporary HP equal to your Presence trait.'},
+      specialization:{name:'Captivating Melody',description:'Your performances now affect all allies within far range. Additionally, enemies who hear you perform must make an Instinct roll or become Distracted.'},
+      mastery:{name:'Symphony of Heroes',description:'While performing, all allies gain +2 to action rolls instead of +1, and once per performance, you can let an ally reroll a failed action roll.'}
+    },
+    Wordsmith: {
+      spellcastTrait:'Knowledge',
+      foundation:{name:'Power Word',description:'You learn a Word of Power. Once per short rest, speak it to deal d8 magical damage to a target in close range or heal an ally for d8 HP.'},
+      specialization:{name:'Expanded Lexicon',description:'You learn two additional Words of Power. You can now use your Words of Power twice per short rest each, and they deal/heal d10.'},
+      mastery:{name:'True Name',description:'You can spend an action to learn a creature\'s True Name. Speaking it forces them to obey one command (Presence vs their Instinct to resist).'}
+    },
+    'Warden of Renewal': {
+      spellcastTrait:'Instinct',
+      foundation:{name:'Restorative Vines',description:'Your Wild Touch now heals for d8 instead of d6, and removes one condition (Slowed, Frightened, or Poisoned) from the target.'},
+      specialization:{name:'Circle of Renewal',description:'Once per long rest, you can create a 30ft circle of renewal. All allies who rest within it heal to full HP and remove all conditions.'},
+      mastery:{name:'Avatar of the Green',description:'While shapeshifted, you regenerate d6 HP at the start of each of your turns and allies within close range heal 1 HP per turn.'}
+    },
+    'Warden of the Elements': {
+      spellcastTrait:'Knowledge',
+      foundation:{name:'Elemental Strike',description:'Your attacks can deal elemental damage (fire, ice, lightning, or stone). Choose when you attack. Each element has a bonus effect on a critical hit.'},
+      specialization:{name:'Elemental Mastery',description:'You gain resistance to your chosen element. When you deal elemental damage, targets must save or suffer a condition: fire=burning, ice=slowed, lightning=stunned, stone=prone.'},
+      mastery:{name:'Primeval Storm',description:'Once per long rest, you can unleash an elemental storm in far range. It deals 3d10 damage of your chosen element and inflicts the corresponding condition on all enemies.'}
+    },
+    Stalwart: {
+      spellcastTrait:null,
+      foundation:{name:'Immovable',description:'You cannot be moved against your will by any non-magical effect. You gain +1 to rolls to resist being pushed, pulled, or knocked prone.'},
+      specialization:{name:'Fortress',description:'Your Protector\'s Aura now grants +2 armor score. When an ally within your aura is attacked, you can spend a reaction to give the attacker disadvantage.'},
+      mastery:{name:'Unbreakable Bastion',description:'Once per long rest, for one minute, you are immune to all conditions and your armor score is doubled. Allies in your aura gain resistance to all damage.'}
+    },
+    Vengeant: {
+      spellcastTrait:'Presence',
+      foundation:{name:'Retribution',description:'When you take damage from an enemy, your next attack against that enemy deals an additional d6 damage.'},
+      specialization:{name:'Wrath of the Fallen',description:'When an ally within close range takes damage, you can use a reaction to make an attack against the attacker with advantage.'},
+      mastery:{name:'Avenging Storm',description:'Once per long rest, when you or an ally drop to 0 HP, you enter an avenging fury. For one minute, all your attacks deal double damage and you can\'t be killed.'}
+    },
+    Wayfinder: {
+      spellcastTrait:'Instinct',
+      foundation:{name:'Trailblazer',description:'You can guide the party to move at double pace without penalties. You gain advantage on rolls to navigate, forage, or avoid natural hazards.'},
+      specialization:{name:'Terrain Master',description:'Choose a favored terrain. While in it, you and your allies gain +2 to Agility and Instinct rolls. You can change your favored terrain during a long rest.'},
+      mastery:{name:'Horizon Walker',description:'You can teleport to any location you can see as a free action once per turn. You can bring one willing ally within melee range with you.'}
+    },
+    Beastbound: {
+      spellcastTrait:'Instinct',
+      foundation:{name:'Animal Companion',description:'You gain a beast companion of your tier. It acts on your turn, can attack (d6 damage), and has HP equal to your level × 2.'},
+      specialization:{name:'Primal Bond',description:'Your companion grows stronger: +2 damage, +4 HP, and gains a special ability based on its type (flight, tracking, or intimidation).'},
+      mastery:{name:'Alpha Pack',description:'You gain a second animal companion. Both companions can act independently on your turn, and when they both attack the same target, they deal an extra d8 damage.'}
+    },
+    Syndicate: {
+      spellcastTrait:null,
+      foundation:{name:'Street Smarts',description:'You gain advantage on rolls to gather information, find black markets, or identify criminal activity. You have a contact in every major settlement.'},
+      specialization:{name:'Mastermind',description:'Once per short rest, you can devise a plan. All allies who follow the plan gain +2 to their next action roll related to it. If the plan succeeds, everyone gains 1 Hope.'},
+      mastery:{name:'Crime Lord',description:'You have a network of loyal agents. Once per long rest, you can call in a favor: reinforcements (d4 allies), information, smuggled goods, or a distraction.'}
+    },
+    Nightwalker: {
+      spellcastTrait:'Instinct',
+      foundation:{name:'Shadow Meld',description:'While in dim light or darkness, you gain +2 to stealth rolls and your Sneak Attack deals an additional d4 damage.'},
+      specialization:{name:'Umbral Step',description:'You can teleport between shadows within far range as a free action once per turn. After teleporting, your next attack has advantage.'},
+      mastery:{name:'Lord of Shadows',description:'You can plunge an area within far range into magical darkness as an action. Enemies in the darkness are Blinded. You can see normally in this darkness.'}
+    },
+    'Winged Sentinel': {
+      spellcastTrait:'Presence',
+      foundation:{name:'Radiant Shield',description:'While your wings are manifested, allies within melee range gain +1 Evasion. You can spend a reaction to deflect a ranged attack targeting an ally.'},
+      specialization:{name:'Heaven\'s Wrath',description:'Your melee attacks deal an additional d4 radiant damage. When you fly, you don\'t provoke opportunity attacks.'},
+      mastery:{name:'Celestial Guardian',description:'Once per long rest, you can manifest a radiant barrier around all allies within close range for one minute. The barrier absorbs up to 20 damage per ally.'}
+    },
+    'Divine Wielder': {
+      spellcastTrait:'Strength',
+      foundation:{name:'Sacred Weapon',description:'You can channel divine energy through your weapon. Your weapon attacks deal magical damage and glow with divine light, illuminating close range.'},
+      specialization:{name:'Smite',description:'Once per turn, when you hit with a weapon attack, you can add 2d6 radiant damage. If the target is undead or fiendish, it deals 3d6 instead.'},
+      mastery:{name:'Avatar of Judgment',description:'Once per long rest, you transform for one minute. You grow to large size, your weapon deals double damage, and you can fly. Enemies that start their turn near you take d8 radiant damage.'}
+    },
+    'Elemental Origin': {
+      spellcastTrait:'Instinct',
+      foundation:{name:'Elemental Affinity',description:'Choose an element (fire, ice, lightning, or earth). Your spellcast attacks deal that element\'s damage type and you gain resistance to it.'},
+      specialization:{name:'Elemental Body',description:'You can partially transform into your element as a free action. You gain advantage on saves related to your element and can move through your element freely.'},
+      mastery:{name:'Elemental Apotheosis',description:'You can fully become your element for one minute, once per long rest. You are immune to physical damage, your spells deal +d8 damage, and you gain a unique ability based on your element.'}
+    },
+    'Primal Origin': {
+      spellcastTrait:'Knowledge',
+      foundation:{name:'Raw Magic',description:'Your Wild Magic surges now happen on any roll of 20 or 1. You choose from a table of effects instead of the GM choosing. Beneficial surges affect allies.'},
+      specialization:{name:'Primal Channeling',description:'You can absorb ambient magical energy. After a short rest, you regain one spent domain card ability. Your Wild Magic surges are always beneficial to allies.'},
+      mastery:{name:'Primal Conduit',description:'You become a conduit for raw magical force. Once per long rest, cast any spell from any domain at maximum effect without spending a domain card.'}
+    },
+    'Call of the Brave': {
+      spellcastTrait:null,
+      foundation:{name:'Rallying Cry',description:'Once per short rest, as a free action, shout a rallying cry. All allies who can hear you gain temporary HP equal to your level and +1 to their next action roll.'},
+      specialization:{name:'Fearless Charge',description:'When you move toward an enemy and attack on the same turn, you deal an additional d6 damage and the target must make an Instinct roll or become Frightened of you.'},
+      mastery:{name:'Legend of the Brave',description:'Your mere presence inspires courage. Allies within far range are immune to the Frightened condition. Once per long rest, when an ally would drop to 0 HP, they drop to 1 instead.'}
+    },
+    'Call of the Slayer': {
+      spellcastTrait:null,
+      foundation:{name:'Mark Prey',description:'As a free action, mark a creature you can see. You deal +d4 damage to your marked prey and can sense their location within far range.'},
+      specialization:{name:'Relentless Hunter',description:'When your marked prey moves, you can use a reaction to move the same distance toward them. Your mark now deals +d6 damage.'},
+      mastery:{name:'Apex Slayer',description:'You can maintain marks on up to 3 creatures. Whenever you kill a marked creature, immediately make a free attack against another marked creature within range.'}
+    },
+    'School of Knowledge': {
+      spellcastTrait:'Knowledge',
+      foundation:{name:'Studied Spellcaster',description:'When you cast a spell, you can add your Knowledge trait to the damage roll in addition to any other bonuses.'},
+      specialization:{name:'Encyclopedic Mind',description:'Your vault capacity increases by 3. Once per short rest, you can swap a loadout card with a vault card as a free action during combat.'},
+      mastery:{name:'Grand Magus',description:'You have mastered the arcane arts. Your spells cost 1 less Hope (minimum 0). Once per long rest, you can cast two spells on the same turn.'}
+    },
+    'School of Stars': {
+      spellcastTrait:'Instinct',
+      foundation:{name:'Starlight Magic',description:'Your spells manifest as starlight. Once per short rest, you can create a zone of starlight in close range that lasts one minute, illuminating and granting allies +1 to spellcast.'},
+      specialization:{name:'Celestial Divination',description:'During a rest, you can read the stars. Ask the GM one yes-or-no question about the future; they answer truthfully. You also gain +2 to Initiative rolls.'},
+      mastery:{name:'Master of Constellations',description:'You can call down starfire once per long rest. Each enemy in far range takes 3d10 magical damage. Allies in the area are healed for 2d8 HP instead.'}
+    }
+  },
+  advancementOptions: {
+    2: {
+      automatic: 'Gain an Experience at +2. Gain +1 Proficiency.',
+      choices: [
+        {id:'traits',label:'+1 to two unmarked character traits (mark them)'},
+        {id:'hp',label:'Permanently gain one Hit Point slot'},
+        {id:'stress',label:'Permanently gain one Stress slot'},
+        {id:'experiences',label:'+1 to two Experiences'},
+        {id:'domaincard',label:'Additional domain card (up to level 4)'},
+        {id:'evasion',label:'+1 Evasion'}
+      ]
+    },
+    3: {
+      automatic: 'Gain an Experience at +2. Clear all marks on character traits. Gain +1 Proficiency.',
+      choices: [
+        {id:'traits',label:'+1 to two unmarked character traits (mark them)'},
+        {id:'hp',label:'Permanently gain one Hit Point slot'},
+        {id:'stress',label:'Permanently gain one Stress slot'},
+        {id:'experiences',label:'+1 to two Experiences'},
+        {id:'domaincard',label:'Additional domain card (up to level 7)'},
+        {id:'evasion',label:'+1 Evasion'},
+        {id:'subclass',label:'Take an upgraded subclass card (cross out multiclass)'},
+        {id:'proficiency',label:'Increase your Proficiency by +1'},
+        {id:'multiclass',label:'Multiclass: choose an additional class (cross out subclass upgrade)'}
+      ]
+    },
+    4: {
+      automatic: 'Gain an Experience at +2. Clear all marks on character traits. Gain +1 Proficiency.',
+      choices: [
+        {id:'traits',label:'+1 to two unmarked character traits (mark them)'},
+        {id:'hp',label:'Permanently gain one Hit Point slot'},
+        {id:'stress',label:'Permanently gain one Stress slot'},
+        {id:'experiences',label:'+1 to two Experiences'},
+        {id:'domaincard',label:'Additional domain card (up to level 7)'},
+        {id:'evasion',label:'+1 Evasion'},
+        {id:'subclass',label:'Take an upgraded subclass card (cross out multiclass)'},
+        {id:'proficiency',label:'Increase your Proficiency by +1'},
+        {id:'multiclass',label:'Multiclass: choose an additional class (cross out subclass upgrade)'}
+      ]
+    }
+  }
 };
 
 function uuid() {
@@ -885,10 +1407,15 @@ function defaultChar() {
     armorScore: 0, armorSlots: 0, armorMarked: 0,
     thresholds: { major:0, severe:0 },
     hope: 2, fear: 0,
+    gold: { handfuls: 0, bags: 0, chests: 0 },
+    inventory: '',
     weapons: [],
     armor: { name:'' },
     experiences: [],
     domainCards: [],
+    backgroundAnswers: ['','',''],
+    connectionAnswers: ['','',''],
+    advancements: {},
     notes: ''
   };
 }
@@ -971,9 +1498,33 @@ function onClassChange(className) {
     c.subclass = '';
     document.getElementById('subclassSelect').value = '';
   }
+  // Apply suggested loadout from class data
+  const classData = DAGGERHEART_DATA.classes[className];
+  if (classData) {
+    if (classData.suggestedTraits) {
+      c.traits = Object.assign({}, classData.suggestedTraits);
+      renderTraits();
+    }
+    if (classData.suggestedArmor) {
+      c.armor.name = classData.suggestedArmor;
+      document.getElementById('armorSelect').value = classData.suggestedArmor;
+    }
+    if (classData.suggestedWeapons) {
+      c.weapons = classData.suggestedWeapons.map(w => Object.assign({}, w));
+      renderWeapons();
+    }
+    // Populate inventory with starting items
+    const classFeatures = DAGGERHEART_DATA.classFeatures[className];
+    if (classFeatures && classFeatures.startingItems) {
+      c.inventory = classFeatures.startingItems;
+      document.getElementById('inventoryArea').value = c.inventory;
+    }
+  }
   recalcStats();
   save();
   updateCardBrowser();
+  renderClassFeatures();
+  renderBackgroundQuestions();
 }
 
 function onAncestryChange() {
@@ -1061,8 +1612,6 @@ function recalcStats() {
   // Armor section displays
   document.getElementById('armorScoreDisplay').value = armorScore;
   document.getElementById('armorSlotsDisplay').value = armorSlots;
-  document.getElementById('armorMajorDisplay').value = majorTh;
-  document.getElementById('armorSevereDisplay').value = severeTh;
   document.getElementById('armorFeatureDisplay').textContent = armorFeature;
   // Combat section displays
   document.getElementById('combatArmorScore').value = armorScore;
@@ -1136,6 +1685,7 @@ function renderBrowserCards() {
         <div class="card-info">
           <span class="card-name">${esc(card.name)}</span>
           <span class="card-meta">Lv${card.level} ${card.type} &middot; ${domain}</span>
+          ${card.desc ? `<span class="card-desc">${esc(card.desc)}</span>` : ''}
         </div>
         ${added ? '<span style="color:var(--text-dark);font-size:0.75rem">Added</span>' :
           `<button class="btn btn-sm" onclick="addBrowserCard('${esc(card.name)}','${card.type}','${domain}','loadout')">+Loadout</button>
@@ -1150,7 +1700,9 @@ function renderBrowserCards() {
 
 function addBrowserCard(name, type, domain, location) {
   const c = current(); if (!c) return;
-  c.domainCards.push({ name, description: '', location, type, domain });
+  const cardData = (DAGGERHEART_DATA.domainCards[domain] || []).find(cd => cd.name === name);
+  const description = cardData && cardData.desc ? cardData.desc : '';
+  c.domainCards.push({ name, description, location, type, domain });
   save();
   renderDomainCards();
   renderBrowserCards();
@@ -1261,6 +1813,13 @@ function adjustCounter(field, delta) {
   document.getElementById(field + 'Value').textContent = c[field];
 }
 
+function adjustGold(denom, delta) {
+  const c = current(); if (!c) return;
+  c.gold[denom] = Math.max(0, (c.gold[denom] || 0) + delta);
+  save();
+  updateGoldDisplay();
+}
+
 // --- Weapons ---
 function renderWeapons() {
   const c = current(); if (!c) return;
@@ -1277,9 +1836,9 @@ function renderWeapons() {
             <option value="secondary" ${w.slot==='secondary'?'selected':''}>Secondary</option>
             <option value="inventory" ${w.slot==='inventory'?'selected':''}>Inventory</option>
           </select>
-          <input type="text" value="${esc(w.name)}" placeholder="Name" oninput="updateWeapon(${i},'name',this.value)">
+          <input type="text" value="${esc(w.name || '')}" placeholder="Weapon name" oninput="updateWeapon(${i},'name',this.value)" style="flex:1">
         </div>
-        <input type="text" value="${esc(w.description)}" placeholder="Properties / description" oninput="updateWeapon(${i},'description',this.value)">
+        <input type="text" value="${esc(w.description || '')}" placeholder="Properties / description" oninput="updateWeapon(${i},'description',this.value)">
       </div>
       <button class="remove-btn" onclick="removeWeapon(${i})">&times;</button>`;
     el.appendChild(item);
@@ -1412,8 +1971,9 @@ function bindFields() {
         populateCharSelect();
         document.getElementById('charSelect').value = currentId;
       }
-      if (field === 'level') { updateDerived(); recalcStats(); save(); updateCardBrowser(); }
+      if (field === 'level') { updateDerived(); recalcStats(); save(); updateCardBrowser(); renderClassFeatures(); renderAdvancements(); renderWeapons(); }
       if (field === 'class') onClassChange(el.value);
+      if (field === 'subclass') { renderClassFeatures(); save(); }
       if (field === 'ancestry') onAncestryChange();
       save();
     };
@@ -1469,12 +2029,175 @@ function esc(s) {
   return d.innerHTML;
 }
 
+// --- Migration ---
+function migrateCharacter(c) {
+  if (c.gold === undefined) c.gold = { handfuls: 0, bags: 0, chests: 0 };
+  if (typeof c.gold === 'number') c.gold = { handfuls: c.gold, bags: 0, chests: 0 };
+  if (c.inventory === undefined) c.inventory = '';
+  if (!c.backgroundAnswers) c.backgroundAnswers = ['','',''];
+  if (!c.connectionAnswers) c.connectionAnswers = ['','',''];
+  if (!c.advancements || Array.isArray(c.advancements)) c.advancements = {};
+  // Migrate old weapon formats
+  if (c.weapons && c.weapons.length > 0) {
+    c.weapons = c.weapons.map(w => {
+      if (w.source === 'standard') {
+        return { name: w.weaponName || '', description: '', slot: w.slot || 'primary' };
+      }
+      return { name: w.name || '', description: w.description || '', slot: w.slot || 'primary' };
+    });
+  }
+}
+
+// --- Gold display ---
+function updateGoldDisplay() {
+  const c = current(); if (!c) return;
+  document.getElementById('goldHandfuls').textContent = c.gold.handfuls || 0;
+  document.getElementById('goldBags').textContent = c.gold.bags || 0;
+  document.getElementById('goldChests').textContent = c.gold.chests || 0;
+}
+
+function updateInventory(val) {
+  const c = current(); if (!c) return;
+  c.inventory = val;
+  save();
+}
+
+// --- Class Features ---
+function renderClassFeatures() {
+  const c = current(); if (!c) return;
+  const section = document.getElementById('classFeaturesSection');
+  const content = document.getElementById('classFeaturesContent');
+  const classData = DAGGERHEART_DATA.classFeatures[c.class];
+  const subData = DAGGERHEART_DATA.subclassFeatures[c.subclass];
+  if (!classData) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  const tier = tierFromLevel(c.level || 1);
+  let html = '<div class="class-features-list">';
+  // Class features
+  classData.features.forEach(f => {
+    html += `<div class="class-feature-item"><div class="cf-name">${esc(f.name)}</div><div class="cf-desc">${esc(f.description)}</div></div>`;
+  });
+  // Hope feature
+  const h = classData.hopeFeature;
+  html += `<div class="hope-feature-item"><div class="cf-name">${esc(h.name)}<span class="cf-cost">${h.cost} Hope</span></div><div class="cf-desc">${esc(h.description)}</div></div>`;
+  // Subclass features
+  if (subData) {
+    if (subData.spellcastTrait) {
+      html += `<div class="subclass-feature-item"><div class="cf-name">${esc(c.subclass)} <span class="spellcast-badge">Spellcast: ${esc(subData.spellcastTrait)}</span></div></div>`;
+    }
+    // Foundation (tier 1+)
+    html += `<div class="subclass-feature-item"><div class="cf-name">${esc(subData.foundation.name)}<span class="cf-tier">Foundation</span></div><div class="cf-desc">${esc(subData.foundation.description)}</div></div>`;
+    // Specialization (tier 2+)
+    if (tier >= 2) {
+      html += `<div class="subclass-feature-item"><div class="cf-name">${esc(subData.specialization.name)}<span class="cf-tier">Specialization</span></div><div class="cf-desc">${esc(subData.specialization.description)}</div></div>`;
+    }
+    // Mastery (tier 3+)
+    if (tier >= 3) {
+      html += `<div class="subclass-feature-item"><div class="cf-name">${esc(subData.mastery.name)}<span class="cf-tier">Mastery</span></div><div class="cf-desc">${esc(subData.mastery.description)}</div></div>`;
+    }
+  }
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+// --- Background & Connection Questions ---
+function renderBackgroundQuestions() {
+  const c = current(); if (!c) return;
+  const section = document.getElementById('backgroundSection');
+  const content = document.getElementById('backgroundContent');
+  const classData = DAGGERHEART_DATA.classFeatures[c.class];
+  if (!classData) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  let html = '<div class="questions-grid">';
+  html += '<label style="text-transform:uppercase;letter-spacing:1px;color:var(--primary);font-size:0.75rem;margin-bottom:0">Background Questions</label>';
+  classData.backgroundQuestions.forEach((q, i) => {
+    html += `<div class="question-item"><label>${esc(q)}</label><textarea oninput="updateBackgroundAnswer(${i},this.value)">${esc(c.backgroundAnswers[i] || '')}</textarea></div>`;
+  });
+  html += '<label style="text-transform:uppercase;letter-spacing:1px;color:var(--accent-light);font-size:0.75rem;margin:0.5rem 0 0">Connection Questions</label>';
+  classData.connectionQuestions.forEach((q, i) => {
+    html += `<div class="question-item"><label>${esc(q)}</label><textarea oninput="updateConnectionAnswer(${i},this.value)">${esc(c.connectionAnswers[i] || '')}</textarea></div>`;
+  });
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function updateBackgroundAnswer(i, val) {
+  const c = current(); if (!c) return;
+  if (!c.backgroundAnswers) c.backgroundAnswers = ['','',''];
+  c.backgroundAnswers[i] = val;
+  save();
+}
+function updateConnectionAnswer(i, val) {
+  const c = current(); if (!c) return;
+  if (!c.connectionAnswers) c.connectionAnswers = ['','',''];
+  c.connectionAnswers[i] = val;
+  save();
+}
+
+// --- Advancement Tracking ---
+function renderAdvancements() {
+  const c = current(); if (!c) return;
+  const section = document.getElementById('advancementSection');
+  const content = document.getElementById('advancementContent');
+  const lvl = c.level || 1;
+  if (lvl < 2) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  if (!c.advancements || Array.isArray(c.advancements)) c.advancements = {};
+  const tierLevels = [{tier:2,triggerLevel:2},{tier:3,triggerLevel:5},{tier:4,triggerLevel:8}];
+  let html = '';
+  tierLevels.forEach(({tier, triggerLevel}) => {
+    if (lvl < triggerLevel) return;
+    const tierData = DAGGERHEART_DATA.advancementOptions[tier];
+    if (!tierData) return;
+    if (!c.advancements[tier]) c.advancements[tier] = [];
+    const chosen = c.advancements[tier];
+    const remaining = 2 - chosen.length;
+    // Collect available choices: current tier + all previous tiers
+    let allChoices = [];
+    for (let t = 2; t <= tier; t++) {
+      const td = DAGGERHEART_DATA.advancementOptions[t];
+      if (td) td.choices.forEach(ch => {
+        if (!allChoices.find(c => c.id === ch.id)) allChoices.push(ch);
+      });
+    }
+    html += `<div class="advancement-level">`;
+    html += `<div class="advancement-level-header"><span class="level-label">Tier ${tier} (Level ${triggerLevel})</span><span class="slots-remaining">${remaining} choice${remaining !== 1 ? 's' : ''} remaining</span></div>`;
+    html += `<div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.5rem;font-style:italic">${esc(tierData.automatic)}</div>`;
+    allChoices.forEach(opt => {
+      const checked = chosen.includes(opt.id);
+      const disabled = !checked && remaining <= 0;
+      html += `<div class="advancement-option${disabled ? ' disabled' : ''}">`;
+      html += `<input type="checkbox" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''} onchange="toggleAdvancement(${tier},'${opt.id}')">`;
+      html += `<span>${esc(opt.label)}</span>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  content.innerHTML = html;
+  save();
+}
+
+function toggleAdvancement(tier, optionId) {
+  const c = current(); if (!c) return;
+  if (!c.advancements || Array.isArray(c.advancements)) c.advancements = {};
+  if (!c.advancements[tier]) c.advancements[tier] = [];
+  const idx = c.advancements[tier].indexOf(optionId);
+  if (idx >= 0) {
+    c.advancements[tier].splice(idx, 1);
+  } else {
+    c.advancements[tier].push(optionId);
+  }
+  save();
+  renderAdvancements();
+}
+
 // --- Load full UI for current char ---
 function loadCharacterUI() {
   const c = current(); if (!c) return;
   // Ensure armor object exists for older saved characters
   if (!c.armor || typeof c.armor === 'string') c.armor = { name: c.armor || '' };
   if (c.armor.name === undefined) c.armor = { name: '' };
+  migrateCharacter(c);
   populateDropdowns();
   populateArmorSelect();
   bindFields();
@@ -1502,8 +2225,6 @@ function loadCharacterUI() {
     const aSev = c.thresholds.severe || 0;
     document.getElementById('armorScoreDisplay').value = aScore;
     document.getElementById('armorSlotsDisplay').value = c.armorSlots || 0;
-    document.getElementById('armorMajorDisplay').value = aMaj;
-    document.getElementById('armorSevereDisplay').value = aSev;
     document.getElementById('armorFeatureDisplay').textContent = armorData ? armorData.feature || '' : '';
     document.getElementById('combatArmorScore').value = aScore;
     document.getElementById('combatThreshMajor').value = aMaj;
@@ -1519,6 +2240,12 @@ function loadCharacterUI() {
   renderExperiences();
   renderDomainCards();
   updateCardBrowser();
+  renderClassFeatures();
+  renderBackgroundQuestions();
+  renderAdvancements();
+  // Gold & inventory
+  updateGoldDisplay();
+  document.getElementById('inventoryArea').value = c.inventory || '';
 }
 
 // --- Init ---
