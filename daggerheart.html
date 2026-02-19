@@ -389,6 +389,27 @@ label {
 /* Notes */
 .notes-area { width: 100%; min-height: 150px; }
 
+/* Card Browser */
+.domain-tabs {
+  display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.75rem; padding-top: 0.5rem;
+}
+.domain-tab {
+  padding: 0.25rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--bg); color: var(--text-dim); font-size: 0.8rem; cursor: pointer;
+}
+.domain-tab:hover { border-color: var(--primary-dim); color: var(--text); }
+.domain-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.browser-card {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  margin-bottom: 0.3rem; font-size: 0.85rem;
+}
+.browser-card .card-info { flex: 1; }
+.browser-card .card-info .card-name { color: var(--text); font-weight: 500; }
+.browser-card .card-info .card-meta { color: var(--text-dark); font-size: 0.75rem; }
+.browser-card.already-added { opacity: 0.45; }
+.browser-card.already-added .btn { pointer-events: none; }
+
 /* Responsive */
 @media (max-width: 768px) {
   .sheet { grid-template-columns: 1fr; }
@@ -445,19 +466,19 @@ label {
         </div>
         <div class="field-group">
           <label>Ancestry</label>
-          <input type="text" data-field="ancestry" placeholder="Ancestry">
+          <select data-field="ancestry" id="ancestrySelect"><option value="">-- Select Ancestry --</option></select>
         </div>
         <div class="field-group">
           <label>Community</label>
-          <input type="text" data-field="community" placeholder="Community">
+          <select data-field="community" id="communitySelect"><option value="">-- Select Community --</option></select>
         </div>
         <div class="field-group">
           <label>Class</label>
-          <input type="text" data-field="class" placeholder="Class">
+          <select data-field="class" id="classSelect"><option value="">-- Select Class --</option></select>
         </div>
         <div class="field-group">
           <label>Subclass</label>
-          <input type="text" data-field="subclass" placeholder="Subclass">
+          <select data-field="subclass" id="subclassSelect"><option value="">-- Select Subclass --</option></select>
         </div>
       </div>
     </div>
@@ -483,7 +504,7 @@ label {
     <div class="section-body">
       <div class="combat-row">
         <span class="combat-label">Evasion</span>
-        <input type="number" data-field="evasion" value="10" style="width:70px">
+        <input type="number" data-field="evasion" value="10" style="width:70px" readonly>
       </div>
       <div class="combat-row">
         <span class="combat-label">Hit Points</span>
@@ -503,30 +524,26 @@ label {
       </div>
       <div class="combat-row">
         <span class="combat-label">Armor Score</span>
-        <input type="number" data-field="armorScore" value="0" style="width:70px">
+        <input type="number" id="combatArmorScore" value="0" style="width:70px" readonly>
       </div>
       <div class="combat-row">
         <span class="combat-label">Armor Slots</span>
         <div class="slots" id="armorSlots"></div>
         <div class="slot-config">
           <label>Max</label>
-          <input type="number" id="armorSlotsInput" min="0" max="12" value="0">
+          <input type="number" id="armorSlotsInput" min="0" max="12" value="0" readonly>
         </div>
       </div>
       <div class="combat-row">
         <span class="combat-label">Damage Thresholds</span>
         <div class="thresholds-row">
           <div class="threshold-item">
-            <label>Minor</label>
-            <input type="number" data-field="thresholds.minor" value="0">
-          </div>
-          <div class="threshold-item">
             <label>Major</label>
-            <input type="number" data-field="thresholds.major" value="0">
+            <input type="number" id="combatThreshMajor" value="0" readonly>
           </div>
           <div class="threshold-item">
             <label>Severe</label>
-            <input type="number" data-field="thresholds.severe" value="0">
+            <input type="number" id="combatThreshSevere" value="0" readonly>
           </div>
         </div>
       </div>
@@ -578,20 +595,31 @@ label {
       <span class="chevron">&#9660;</span>
     </div>
     <div class="section-body">
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-        <div class="field-group" style="flex:2;min-width:120px">
-          <label>Armor Name</label>
-          <input type="text" data-field="armor.name" placeholder="Armor name">
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
+        <div class="field-group" style="flex:3;min-width:180px">
+          <label>Armor</label>
+          <select id="armorSelect"><option value="">-- Select Armor --</option></select>
         </div>
-        <div class="field-group" style="flex:1;min-width:70px">
+        <div class="field-group" style="flex:1;min-width:60px">
           <label>Score</label>
-          <input type="number" data-field="armor.score" value="0">
+          <input type="number" id="armorScoreDisplay" readonly style="color:var(--primary);font-weight:600">
         </div>
-        <div class="field-group" style="flex:2;min-width:120px">
-          <label>Thresholds / Properties</label>
-          <input type="text" data-field="armor.thresholds" placeholder="e.g. Minor 3 / Major 7">
+        <div class="field-group" style="flex:1;min-width:60px">
+          <label>Slots</label>
+          <input type="number" id="armorSlotsDisplay" readonly style="color:var(--primary);font-weight:600">
         </div>
       </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.5rem">
+        <div class="field-group">
+          <label>Major Threshold</label>
+          <input type="number" id="armorMajorDisplay" readonly style="width:70px;color:var(--primary);font-weight:600">
+        </div>
+        <div class="field-group">
+          <label>Severe Threshold</label>
+          <input type="number" id="armorSevereDisplay" readonly style="width:70px;color:var(--primary);font-weight:600">
+        </div>
+      </div>
+      <div id="armorFeatureDisplay" style="color:var(--text-dim);font-size:0.8rem;font-style:italic"></div>
     </div>
   </div>
 
@@ -616,6 +644,16 @@ label {
       <span class="chevron">&#9660;</span>
     </div>
     <div class="section-body">
+      <div class="domain-group" id="cardBrowserGroup" style="display:none">
+        <div class="domain-group-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="toggleCardBrowser()">
+          <span>Card Browser</span>
+          <span class="chevron" id="browserChevron">&#9660;</span>
+        </div>
+        <div id="cardBrowserBody">
+          <div class="domain-tabs" id="domainTabs"></div>
+          <div id="browserCardList"></div>
+        </div>
+      </div>
       <div class="domain-group">
         <div class="domain-group-title">Loadout</div>
         <div id="loadoutList"></div>
@@ -650,6 +688,188 @@ label {
 const STORAGE_KEY = 'daggerheart_characters';
 const TRAITS = ['agility','strength','finesse','instinct','presence','knowledge'];
 
+const DAGGERHEART_DATA = {
+  ancestries: ['Clank','Drakona','Dwarf','Elf','Faerie','Faun','Firbolg','Fungril','Galapa','Giant','Goblin','Halfling','Human','Infernis','Katari','Orc','Ribbet','Simiah'],
+  // Ancestry modifiers applied at creation: hp/stress/evasion deltas
+  ancestryMods: {
+    Giant:  { hp: 1 },
+    Human:  { stress: 1 },
+    Simiah: { evasion: 1 }
+  },
+  communities: ['Highborne','Loreborne','Orderborne','Ridgeborne','Seaborne','Slyborne','Underborne','Wanderborne','Wildborne'],
+  classes: {
+    Bard:       { domains: ['Grace','Codex'], subclasses: ['Troubadour','Wordsmith'], evasion: 10, hp: 5 },
+    Druid:      { domains: ['Sage','Arcana'], subclasses: ['Warden of Renewal','Warden of the Elements'], evasion: 10, hp: 6 },
+    Guardian:   { domains: ['Valor','Blade'], subclasses: ['Stalwart','Vengeant'], evasion: 9, hp: 7 },
+    Ranger:     { domains: ['Sage','Bone'], subclasses: ['Wayfinder','Beastbound'], evasion: 12, hp: 6 },
+    Rogue:      { domains: ['Midnight','Grace'], subclasses: ['Syndicate','Nightwalker'], evasion: 12, hp: 6 },
+    Seraph:     { domains: ['Splendor','Valor'], subclasses: ['Winged Sentinel','Divine Wielder'], evasion: 9, hp: 7 },
+    Sorcerer:   { domains: ['Arcana','Midnight'], subclasses: ['Elemental Origin','Primal Origin'], evasion: 10, hp: 6 },
+    Warrior:    { domains: ['Blade','Bone'], subclasses: ['Call of the Brave','Call of the Slayer'], evasion: 11, hp: 6 },
+    Wizard:     { domains: ['Codex','Splendor'], subclasses: ['School of Knowledge','School of Stars'], evasion: 11, hp: 5 }
+  },
+  domainCards: {
+    Arcana: [
+      {name:'Arcane Volley',level:1,type:'Ability'},{name:'Channel Elements',level:1,type:'Ability'},
+      {name:'Elemental Burst',level:1,type:'Ability'},{name:'Magic Torrent',level:1,type:'Ability'},
+      {name:'Arcane Armor',level:2,type:'Ability'},{name:'Counterspell',level:2,type:'Ability'},
+      {name:'Illusory Disguise',level:2,type:'Ability'},{name:'Overcharge',level:2,type:'Ability'},
+      {name:'Arcane Sight',level:3,type:'Ability'},{name:'Displacement',level:3,type:'Ability'},
+      {name:'Elemental Wall',level:3,type:'Ability'},{name:'Thunderstrike',level:3,type:'Ability'},
+      {name:'Blink',level:4,type:'Ability'},{name:'Chain Lightning',level:4,type:'Ability'},
+      {name:'Shatter',level:4,type:'Ability'},{name:'Arcane Storm',level:5,type:'Ability'},
+      {name:'Elemental Form',level:5,type:'Ability'},{name:'Meteor',level:6,type:'Ability'},
+      {name:'Time Stop',level:7,type:'Ability'},{name:'Arcanist',level:1,type:'Passive'},
+      {name:'Mana Well',level:3,type:'Passive'}
+    ],
+    Blade: [
+      {name:'Aggressive Strike',level:1,type:'Ability'},{name:'Deflect',level:1,type:'Ability'},
+      {name:'Power Strike',level:1,type:'Ability'},{name:'Whirlwind',level:1,type:'Ability'},
+      {name:'Battle Cry',level:2,type:'Ability'},{name:'Cleave',level:2,type:'Ability'},
+      {name:'Fortify',level:2,type:'Ability'},{name:'Shield Bash',level:2,type:'Ability'},
+      {name:'Blade Storm',level:3,type:'Ability'},{name:'Challenge',level:3,type:'Ability'},
+      {name:'Iron Will',level:3,type:'Ability'},{name:'Riposte',level:3,type:'Ability'},
+      {name:'Devastating Blow',level:4,type:'Ability'},{name:'Hold the Line',level:4,type:'Ability'},
+      {name:'Unstoppable',level:4,type:'Ability'},{name:'Executioner',level:5,type:'Ability'},
+      {name:'Whirlwind of Steel',level:5,type:'Ability'},{name:'Invincible',level:6,type:'Ability'},
+      {name:'Avatar of War',level:7,type:'Ability'},{name:'Blade Mastery',level:1,type:'Passive'},
+      {name:'Warrior Born',level:3,type:'Passive'}
+    ],
+    Bone: [
+      {name:'Animal Companion',level:1,type:'Ability'},{name:'Bone Dart',level:1,type:'Ability'},
+      {name:'Hunter\'s Mark',level:1,type:'Ability'},{name:'Snare',level:1,type:'Ability'},
+      {name:'Beastspeak',level:2,type:'Ability'},{name:'Bonecraft Armor',level:2,type:'Ability'},
+      {name:'Pack Tactics',level:2,type:'Ability'},{name:'Vine Snare',level:2,type:'Ability'},
+      {name:'Feral Strike',level:3,type:'Ability'},{name:'Poison Cloud',level:3,type:'Ability'},
+      {name:'Summon Swarm',level:3,type:'Ability'},{name:'Wild Shape',level:3,type:'Ability'},
+      {name:'Alpha Predator',level:4,type:'Ability'},{name:'Bone Prison',level:4,type:'Ability'},
+      {name:'Nature\'s Wrath',level:4,type:'Ability'},{name:'Dire Form',level:5,type:'Ability'},
+      {name:'Plague',level:5,type:'Ability'},{name:'Apex Predator',level:6,type:'Ability'},
+      {name:'Primeval Storm',level:7,type:'Ability'},{name:'Wild Heart',level:1,type:'Passive'},
+      {name:'Pack Leader',level:3,type:'Passive'}
+    ],
+    Codex: [
+      {name:'Arcane Record',level:1,type:'Ability'},{name:'Guided Strike',level:1,type:'Ability'},
+      {name:'Ink Bolt',level:1,type:'Ability'},{name:'Translate',level:1,type:'Ability'},
+      {name:'Comprehend Languages',level:2,type:'Ability'},{name:'Glyph of Warding',level:2,type:'Ability'},
+      {name:'Identify',level:2,type:'Ability'},{name:'Runic Shield',level:2,type:'Ability'},
+      {name:'Dispel Magic',level:3,type:'Ability'},{name:'Lore Master',level:3,type:'Ability'},
+      {name:'Scrying',level:3,type:'Ability'},{name:'Sigil of Binding',level:3,type:'Ability'},
+      {name:'Mass Translate',level:4,type:'Ability'},{name:'Power Word',level:4,type:'Ability'},
+      {name:'True Name',level:4,type:'Ability'},{name:'Omniglot',level:5,type:'Ability'},
+      {name:'Seal',level:5,type:'Ability'},{name:'Codex of Ages',level:6,type:'Ability'},
+      {name:'Rewrite Reality',level:7,type:'Ability'},{name:'Scholar',level:1,type:'Passive'},
+      {name:'Living Library',level:3,type:'Passive'}
+    ],
+    Grace: [
+      {name:'Charm',level:1,type:'Ability'},{name:'Feather Step',level:1,type:'Ability'},
+      {name:'Inspire',level:1,type:'Ability'},{name:'Tumble',level:1,type:'Ability'},
+      {name:'Dazzle',level:2,type:'Ability'},{name:'Graceful Exit',level:2,type:'Ability'},
+      {name:'Soothing Word',level:2,type:'Ability'},{name:'Vanish',level:2,type:'Ability'},
+      {name:'Dance of Blades',level:3,type:'Ability'},{name:'Enthrall',level:3,type:'Ability'},
+      {name:'Group Invisibility',level:3,type:'Ability'},{name:'Rally',level:3,type:'Ability'},
+      {name:'Dominate',level:4,type:'Ability'},{name:'Miracle Step',level:4,type:'Ability'},
+      {name:'Wind Walk',level:4,type:'Ability'},{name:'Captivate',level:5,type:'Ability'},
+      {name:'Mass Charm',level:5,type:'Ability'},{name:'Time Skip',level:6,type:'Ability'},
+      {name:'Fate Weaver',level:7,type:'Ability'},{name:'Light Footed',level:1,type:'Passive'},
+      {name:'Effortless',level:3,type:'Passive'}
+    ],
+    Midnight: [
+      {name:'Backstab',level:1,type:'Ability'},{name:'Cloak of Shadows',level:1,type:'Ability'},
+      {name:'Shadow Bolt',level:1,type:'Ability'},{name:'Smoke Bomb',level:1,type:'Ability'},
+      {name:'Dark Vision',level:2,type:'Ability'},{name:'Poison Blade',level:2,type:'Ability'},
+      {name:'Shadow Step',level:2,type:'Ability'},{name:'Silence',level:2,type:'Ability'},
+      {name:'Assassinate',level:3,type:'Ability'},{name:'Creeping Darkness',level:3,type:'Ability'},
+      {name:'Shadow Clone',level:3,type:'Ability'},{name:'Umbral Snare',level:3,type:'Ability'},
+      {name:'Death Mark',level:4,type:'Ability'},{name:'Shadow Gate',level:4,type:'Ability'},
+      {name:'Void Strike',level:4,type:'Ability'},{name:'Eclipse',level:5,type:'Ability'},
+      {name:'Shadow Army',level:5,type:'Ability'},{name:'Nightfall',level:6,type:'Ability'},
+      {name:'Eternal Shadow',level:7,type:'Ability'},{name:'Shadow Born',level:1,type:'Passive'},
+      {name:'One with Night',level:3,type:'Passive'}
+    ],
+    Sage: [
+      {name:'Healing Touch',level:1,type:'Ability'},{name:'Nature\'s Grasp',level:1,type:'Ability'},
+      {name:'Purify',level:1,type:'Ability'},{name:'Speak with Nature',level:1,type:'Ability'},
+      {name:'Barkskin',level:2,type:'Ability'},{name:'Entangle',level:2,type:'Ability'},
+      {name:'Restoration',level:2,type:'Ability'},{name:'Wild Growth',level:2,type:'Ability'},
+      {name:'Greater Healing',level:3,type:'Ability'},{name:'Lightning Strike',level:3,type:'Ability'},
+      {name:'Stone Wall',level:3,type:'Ability'},{name:'Wind Gust',level:3,type:'Ability'},
+      {name:'Mass Heal',level:4,type:'Ability'},{name:'Earthquake',level:4,type:'Ability'},
+      {name:'Tidal Wave',level:4,type:'Ability'},{name:'Regeneration',level:5,type:'Ability'},
+      {name:'Storm Call',level:5,type:'Ability'},{name:'Tree of Life',level:6,type:'Ability'},
+      {name:'Nature\'s Avatar',level:7,type:'Ability'},{name:'Naturalist',level:1,type:'Passive'},
+      {name:'Deep Roots',level:3,type:'Passive'}
+    ],
+    Splendor: [
+      {name:'Blessed Strike',level:1,type:'Ability'},{name:'Divine Light',level:1,type:'Ability'},
+      {name:'Guiding Bolt',level:1,type:'Ability'},{name:'Shield of Faith',level:1,type:'Ability'},
+      {name:'Celestial Armor',level:2,type:'Ability'},{name:'Consecrate',level:2,type:'Ability'},
+      {name:'Radiant Burst',level:2,type:'Ability'},{name:'Smite',level:2,type:'Ability'},
+      {name:'Aura of Protection',level:3,type:'Ability'},{name:'Beacon of Hope',level:3,type:'Ability'},
+      {name:'Blinding Light',level:3,type:'Ability'},{name:'Wings of Light',level:3,type:'Ability'},
+      {name:'Divine Judgment',level:4,type:'Ability'},{name:'Holy Fire',level:4,type:'Ability'},
+      {name:'Resurrection',level:4,type:'Ability'},{name:'Celestial Form',level:5,type:'Ability'},
+      {name:'Sunburst',level:5,type:'Ability'},{name:'Divine Intervention',level:6,type:'Ability'},
+      {name:'Apotheosis',level:7,type:'Ability'},{name:'Radiant Soul',level:1,type:'Passive'},
+      {name:'Divine Favor',level:3,type:'Passive'}
+    ],
+    Valor: [
+      {name:'Bolster',level:1,type:'Ability'},{name:'Heroic Strike',level:1,type:'Ability'},
+      {name:'Protect',level:1,type:'Ability'},{name:'Taunt',level:1,type:'Ability'},
+      {name:'Adrenaline Rush',level:2,type:'Ability'},{name:'Bulwark',level:2,type:'Ability'},
+      {name:'Inspiring Presence',level:2,type:'Ability'},{name:'Shield Wall',level:2,type:'Ability'},
+      {name:'Defender\'s Stand',level:3,type:'Ability'},{name:'Heroic Leap',level:3,type:'Ability'},
+      {name:'Rally the Fallen',level:3,type:'Ability'},{name:'Unbreakable',level:3,type:'Ability'},
+      {name:'Champion\'s Challenge',level:4,type:'Ability'},{name:'Last Stand',level:4,type:'Ability'},
+      {name:'Valor\'s Edge',level:4,type:'Ability'},{name:'Indomitable',level:5,type:'Ability'},
+      {name:'War Cry',level:5,type:'Ability'},{name:'Legendary Defender',level:6,type:'Ability'},
+      {name:'Paragon',level:7,type:'Ability'},{name:'Courageous Heart',level:1,type:'Passive'},
+      {name:'Unshakeable',level:3,type:'Passive'}
+    ]
+  },
+  armor: [
+    // Tier 1
+    {name:'Unarmored',tier:0,score:0,major:0,severe:0,feature:''},
+    {name:'Gambeson',tier:1,score:3,major:5,severe:11,feature:'Flexible: +1 Evasion',evasionMod:1},
+    {name:'Leather',tier:1,score:3,major:6,severe:13,feature:''},
+    {name:'Chainmail',tier:1,score:4,major:7,severe:15,feature:'Heavy: -1 Evasion',evasionMod:-1},
+    {name:'Full Plate',tier:1,score:4,major:8,severe:17,feature:'Very Heavy: -2 Evasion, -1 Agility',evasionMod:-2},
+    // Tier 2
+    {name:'Improved Gambeson',tier:2,score:4,major:7,severe:16,feature:'Flexible: +1 Evasion',evasionMod:1},
+    {name:'Improved Leather',tier:2,score:4,major:9,severe:20,feature:''},
+    {name:'Improved Chainmail',tier:2,score:5,major:11,severe:24,feature:'Heavy: -1 Evasion',evasionMod:-1},
+    {name:'Improved Full Plate',tier:2,score:5,major:13,severe:28,feature:'Very Heavy: -2 Evasion, -1 Agility',evasionMod:-2},
+    {name:'Elundrian Chain',tier:2,score:4,major:9,severe:21,feature:'Warded: reduce incoming magic damage'},
+    {name:'Harrowbone',tier:2,score:4,major:9,severe:21,feature:'Resilient: d6 protection'},
+    {name:'Irontree Breastplate',tier:2,score:4,major:9,severe:20,feature:'Reinforced: threshold bonus'},
+    {name:'Runetan Floating',tier:2,score:4,major:9,severe:20,feature:'Shifting: disadvantage feature'},
+    {name:'Tyris Soft',tier:2,score:5,major:8,severe:18,feature:'+2 bonus to stealth'},
+    {name:'Rosewild',tier:2,score:5,major:11,severe:23,feature:'Hope-to-Armor conversion'},
+    // Tier 3
+    {name:'Advanced Gambeson',tier:3,score:5,major:9,severe:23,feature:'Flexible: +1 Evasion',evasionMod:1},
+    {name:'Advanced Leather',tier:3,score:5,major:11,severe:27,feature:''},
+    {name:'Advanced Chainmail',tier:3,score:6,major:13,severe:31,feature:'Heavy: -1 Evasion',evasionMod:-1},
+    {name:'Advanced Full Plate',tier:3,score:6,major:15,severe:35,feature:'Very Heavy: -2 Evasion, -1 Agility',evasionMod:-2},
+    {name:'Bellamie Fine',tier:3,score:5,major:11,severe:27,feature:'+1 to Presence'},
+    {name:'Dragonscale',tier:3,score:5,major:11,severe:27,feature:'Stress conversion'},
+    {name:'Spiked Plate',tier:3,score:5,major:10,severe:25,feature:'Add d4 to melee damage'},
+    {name:'Bladefare',tier:3,score:6,major:16,severe:39,feature:'Physical damage only'},
+    {name:"Monett's Cloak",tier:3,score:6,major:16,severe:39,feature:'Magic damage only'},
+    {name:'Runes of Fortification',tier:3,score:6,major:17,severe:43,feature:'Must mark Stress'},
+    // Tier 4
+    {name:'Legendary Gambeson',tier:4,score:6,major:11,severe:32,feature:'Flexible: +1 Evasion',evasionMod:1},
+    {name:'Legendary Leather',tier:4,score:6,major:13,severe:36,feature:''},
+    {name:'Legendary Chainmail',tier:4,score:7,major:15,severe:40,feature:'Heavy: -1 Evasion',evasionMod:-1},
+    {name:'Legendary Full Plate',tier:4,score:7,major:17,severe:44,feature:'Very Heavy: -2 Evasion, -1 Agility',evasionMod:-2},
+    {name:'Dunamis Silkchain',tier:4,score:7,major:13,severe:36,feature:'d4 Evasion bonus'},
+    {name:'Channeling',tier:4,score:5,major:13,severe:36,feature:'+1 to Spellcast'},
+    {name:'Emberwoven',tier:4,score:6,major:13,severe:36,feature:'Enemy Stress marking'},
+    {name:'Full Fortified',tier:4,score:4,major:15,severe:40,feature:'Doubled severity reduction'},
+    {name:'Veritas Opal',tier:4,score:6,major:13,severe:36,feature:'Lie detection'},
+    {name:'Savior Chainmail',tier:4,score:8,major:18,severe:48,feature:'-1 to traits and Evasion',evasionMod:-1}
+  ]
+};
+
 function uuid() {
   return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
@@ -663,10 +883,10 @@ function defaultChar() {
     evasion: 10, hpMax: 6, hpMarked: 0,
     stressMax: 6, stressMarked: 0,
     armorScore: 0, armorSlots: 0, armorMarked: 0,
-    thresholds: { minor:0, major:0, severe:0 },
-    hope: 0, fear: 0,
+    thresholds: { major:0, severe:0 },
+    hope: 2, fear: 0,
     weapons: [],
-    armor: { name:'', score:0, thresholds:'' },
+    armor: { name:'' },
     experiences: [],
     domainCards: [],
     notes: ''
@@ -711,8 +931,233 @@ function updateDerived() {
   document.getElementById('profDisplay').value = profFromLevel(lvl);
 }
 
+// --- Dropdown population ---
+function populateDropdowns() {
+  const aSelect = document.getElementById('ancestrySelect');
+  const cSelect = document.getElementById('communitySelect');
+  const clSelect = document.getElementById('classSelect');
+  // Ancestry
+  aSelect.innerHTML = '<option value="">-- Select Ancestry --</option>';
+  DAGGERHEART_DATA.ancestries.forEach(a => {
+    aSelect.innerHTML += `<option value="${a}">${a}</option>`;
+  });
+  // Community
+  cSelect.innerHTML = '<option value="">-- Select Community --</option>';
+  DAGGERHEART_DATA.communities.forEach(c => {
+    cSelect.innerHTML += `<option value="${c}">${c}</option>`;
+  });
+  // Class
+  clSelect.innerHTML = '<option value="">-- Select Class --</option>';
+  Object.keys(DAGGERHEART_DATA.classes).forEach(cl => {
+    clSelect.innerHTML += `<option value="${cl}">${cl}</option>`;
+  });
+}
+
+function updateSubclassOptions(className) {
+  const subSelect = document.getElementById('subclassSelect');
+  subSelect.innerHTML = '<option value="">-- Select Subclass --</option>';
+  if (className && DAGGERHEART_DATA.classes[className]) {
+    DAGGERHEART_DATA.classes[className].subclasses.forEach(sc => {
+      subSelect.innerHTML += `<option value="${sc}">${sc}</option>`;
+    });
+  }
+}
+
+function onClassChange(className) {
+  const c = current(); if (!c) return;
+  updateSubclassOptions(className);
+  const validSubs = className && DAGGERHEART_DATA.classes[className] ? DAGGERHEART_DATA.classes[className].subclasses : [];
+  if (!validSubs.includes(c.subclass)) {
+    c.subclass = '';
+    document.getElementById('subclassSelect').value = '';
+  }
+  recalcStats();
+  save();
+  updateCardBrowser();
+}
+
+function onAncestryChange() {
+  recalcStats();
+  save();
+}
+
+function populateArmorSelect() {
+  const sel = document.getElementById('armorSelect');
+  sel.innerHTML = '<option value="">-- Select Armor --</option>';
+  const tierLabels = {0:'',1:'Tier 1',2:'Tier 2',3:'Tier 3',4:'Tier 4'};
+  let currentTier = -1;
+  DAGGERHEART_DATA.armor.forEach(a => {
+    if (a.tier !== currentTier) {
+      currentTier = a.tier;
+      if (currentTier > 0) {
+        const optGroup = document.createElement('optgroup');
+        optGroup.label = tierLabels[currentTier];
+        sel.appendChild(optGroup);
+      }
+    }
+    const opt = document.createElement('option');
+    opt.value = a.name;
+    opt.textContent = a.name;
+    const parent = currentTier > 0 ? sel.querySelector(`optgroup[label="${tierLabels[currentTier]}"]`) : sel;
+    parent.appendChild(opt);
+  });
+}
+
+function onArmorChange(armorName) {
+  const c = current(); if (!c) return;
+  c.armor.name = armorName;
+  recalcStats();
+  save();
+}
+
+function recalcStats() {
+  const c = current(); if (!c) return;
+  const classData = DAGGERHEART_DATA.classes[c.class];
+  if (!classData) return;
+  const lvl = c.level || 1;
+
+  // Base stats from class
+  let hp = classData.hp;
+  let stress = 6;
+  let evasion = classData.evasion;
+
+  // Ancestry modifiers
+  const aMods = DAGGERHEART_DATA.ancestryMods[c.ancestry] || {};
+  if (aMods.hp) hp += aMods.hp;
+  if (aMods.stress) stress += aMods.stress;
+  if (aMods.evasion) evasion += aMods.evasion;
+
+  // Armor
+  const armorData = DAGGERHEART_DATA.armor.find(a => a.name === c.armor.name);
+  let armorScore = 0, armorSlots = 0, majorTh = lvl, severeTh = lvl * 2, armorFeature = '';
+  if (armorData && armorData.name !== 'Unarmored') {
+    armorScore = armorData.score;
+    armorSlots = armorData.score; // armor slots = armor score
+    majorTh = armorData.major + lvl;
+    severeTh = armorData.severe + lvl;
+    armorFeature = armorData.feature || '';
+    if (armorData.evasionMod) evasion += armorData.evasionMod;
+  }
+
+  // Apply to character
+  c.evasion = evasion;
+  c.hpMax = hp;
+  c.hpMarked = Math.min(c.hpMarked, c.hpMax);
+  c.stressMax = stress;
+  c.stressMarked = Math.min(c.stressMarked, c.stressMax);
+  c.armorScore = armorScore;
+  c.armorSlots = armorSlots;
+  c.armorMarked = Math.min(c.armorMarked, c.armorSlots);
+  c.thresholds.major = majorTh;
+  c.thresholds.severe = severeTh;
+  c.hope = Math.max(c.hope, 2);
+
+  // Sync UI
+  const evasionEl = document.querySelector('[data-field="evasion"]');
+  if (evasionEl) evasionEl.value = c.evasion;
+  document.getElementById('hpMaxInput').value = c.hpMax;
+  document.getElementById('stressMaxInput').value = c.stressMax;
+  document.getElementById('hopeValue').textContent = c.hope;
+  // Armor section displays
+  document.getElementById('armorScoreDisplay').value = armorScore;
+  document.getElementById('armorSlotsDisplay').value = armorSlots;
+  document.getElementById('armorMajorDisplay').value = majorTh;
+  document.getElementById('armorSevereDisplay').value = severeTh;
+  document.getElementById('armorFeatureDisplay').textContent = armorFeature;
+  // Combat section displays
+  document.getElementById('combatArmorScore').value = armorScore;
+  document.getElementById('armorSlotsInput').value = armorSlots;
+  document.getElementById('combatThreshMajor').value = majorTh;
+  document.getElementById('combatThreshSevere').value = severeTh;
+  renderSlots('hpSlots', c.hpMax, c.hpMarked, 'filled-hp', toggleHP);
+  renderSlots('stressSlots', c.stressMax, c.stressMarked, 'filled-stress', toggleStress);
+  renderSlots('armorSlots', c.armorSlots, c.armorMarked, 'filled-armor', toggleArmor);
+}
+
+let browserActiveDomain = 'all';
+let browserCollapsed = false;
+
+function toggleCardBrowser() {
+  browserCollapsed = !browserCollapsed;
+  document.getElementById('cardBrowserBody').style.display = browserCollapsed ? 'none' : '';
+  document.getElementById('browserChevron').style.transform = browserCollapsed ? 'rotate(-90deg)' : '';
+}
+
+function updateCardBrowser() {
+  const c = current(); if (!c) return;
+  const group = document.getElementById('cardBrowserGroup');
+  const classData = DAGGERHEART_DATA.classes[c.class];
+  if (!classData) { group.style.display = 'none'; return; }
+  group.style.display = '';
+  // Render domain tabs
+  const tabsEl = document.getElementById('domainTabs');
+  const domains = classData.domains;
+  tabsEl.innerHTML = '';
+  const allTab = document.createElement('button');
+  allTab.className = 'domain-tab' + (browserActiveDomain === 'all' ? ' active' : '');
+  allTab.textContent = 'All';
+  allTab.onclick = () => { browserActiveDomain = 'all'; renderBrowserCards(); updateDomainTabActive(); };
+  tabsEl.appendChild(allTab);
+  domains.forEach(d => {
+    const tab = document.createElement('button');
+    tab.className = 'domain-tab' + (browserActiveDomain === d ? ' active' : '');
+    tab.textContent = d;
+    tab.onclick = () => { browserActiveDomain = d; renderBrowserCards(); updateDomainTabActive(); };
+    tabsEl.appendChild(tab);
+  });
+  browserActiveDomain = 'all';
+  renderBrowserCards();
+}
+
+function updateDomainTabActive() {
+  document.querySelectorAll('#domainTabs .domain-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent === (browserActiveDomain === 'all' ? 'All' : browserActiveDomain));
+  });
+}
+
+function renderBrowserCards() {
+  const c = current(); if (!c) return;
+  const listEl = document.getElementById('browserCardList');
+  listEl.innerHTML = '';
+  const classData = DAGGERHEART_DATA.classes[c.class];
+  if (!classData) return;
+  const domains = browserActiveDomain === 'all' ? classData.domains : [browserActiveDomain];
+  const level = c.level || 1;
+  const existingNames = new Set(c.domainCards.map(d => d.name));
+
+  domains.forEach(domain => {
+    const cards = DAGGERHEART_DATA.domainCards[domain] || [];
+    cards.forEach(card => {
+      if (card.level > level) return;
+      const added = existingNames.has(card.name);
+      const row = document.createElement('div');
+      row.className = 'browser-card' + (added ? ' already-added' : '');
+      row.innerHTML = `
+        <div class="card-info">
+          <span class="card-name">${esc(card.name)}</span>
+          <span class="card-meta">Lv${card.level} ${card.type} &middot; ${domain}</span>
+        </div>
+        ${added ? '<span style="color:var(--text-dark);font-size:0.75rem">Added</span>' :
+          `<button class="btn btn-sm" onclick="addBrowserCard('${esc(card.name)}','${card.type}','${domain}','loadout')">+Loadout</button>
+           <button class="btn btn-sm" onclick="addBrowserCard('${esc(card.name)}','${card.type}','${domain}','vault')">+Vault</button>`}`;
+      listEl.appendChild(row);
+    });
+  });
+  if (listEl.children.length === 0) {
+    listEl.innerHTML = '<div style="color:var(--text-dark);font-size:0.85rem;padding:0.5rem">No cards available at current level.</div>';
+  }
+}
+
+function addBrowserCard(name, type, domain, location) {
+  const c = current(); if (!c) return;
+  c.domainCards.push({ name, description: '', location, type, domain });
+  save();
+  renderDomainCards();
+  renderBrowserCards();
+}
+
 // --- Character selector ---
-function populateSelect() {
+function populateCharSelect() {
   const sel = document.getElementById('charSelect');
   sel.innerHTML = '';
   characters.forEach(c => {
@@ -734,7 +1179,7 @@ function newCharacter() {
   characters.push(c);
   currentId = c.id;
   save();
-  populateSelect();
+  populateCharSelect();
   loadCharacterUI();
 }
 
@@ -744,7 +1189,7 @@ function deleteCharacter() {
   characters = characters.filter(c => c.id !== currentId);
   currentId = characters[0].id;
   save();
-  populateSelect();
+  populateCharSelect();
   loadCharacterUI();
 }
 
@@ -904,9 +1349,11 @@ function renderDomainCards() {
       const other = loc === 'loadout' ? 'vault' : 'loadout';
       const item = document.createElement('div');
       item.className = 'list-item';
+      const meta = d.domain ? `<span style="color:var(--text-dark);font-size:0.75rem">${esc(d.domain)}${d.type ? ' · '+esc(d.type) : ''}</span>` : '';
       item.innerHTML = `
         <div class="list-fields">
           <input type="text" value="${esc(d.name)}" placeholder="Card name" oninput="updateDomainCard(${i},'name',this.value)">
+          ${meta}
           <input type="text" value="${esc(d.description)}" placeholder="Description / effect" oninput="updateDomainCard(${i},'description',this.value)">
           <button class="move-btn" onclick="moveDomainCard(${i},'${other}')">Move to ${other}</button>
         </div>
@@ -924,7 +1371,7 @@ function addDomainCard(location) {
 function removeDomainCard(i) {
   const c = current(); if (!c) return;
   c.domainCards.splice(i, 1);
-  save(); renderDomainCards();
+  save(); renderDomainCards(); renderBrowserCards();
 }
 function updateDomainCard(i, key, val) {
   const c = current(); if (!c) return;
@@ -934,7 +1381,7 @@ function updateDomainCard(i, key, val) {
 function moveDomainCard(i, to) {
   const c = current(); if (!c) return;
   c.domainCards[i].location = to;
-  save(); renderDomainCards();
+  save(); renderDomainCards(); renderBrowserCards();
 }
 
 // --- Generic field binding ---
@@ -956,19 +1403,25 @@ function bindFields() {
   document.querySelectorAll('[data-field]').forEach(el => {
     const field = el.dataset.field;
     const val = getNestedField(c, field);
-    if (el.type === 'number') el.value = val ?? '';
-    else el.value = val ?? '';
+    el.value = val ?? '';
 
-    el.oninput = () => {
+    const handler = () => {
       const v = el.type === 'number' ? (el.value === '' ? 0 : +el.value) : el.value;
       setNestedField(c, field, v);
       if (field === 'name') {
-        populateSelect();
+        populateCharSelect();
         document.getElementById('charSelect').value = currentId;
       }
-      if (field === 'level') updateDerived();
+      if (field === 'level') { updateDerived(); recalcStats(); save(); updateCardBrowser(); }
+      if (field === 'class') onClassChange(el.value);
+      if (field === 'ancestry') onAncestryChange();
       save();
     };
+    if (el.tagName === 'SELECT') {
+      el.onchange = handler;
+    } else {
+      el.oninput = handler;
+    }
   });
 }
 
@@ -1019,9 +1472,43 @@ function esc(s) {
 // --- Load full UI for current char ---
 function loadCharacterUI() {
   const c = current(); if (!c) return;
+  // Ensure armor object exists for older saved characters
+  if (!c.armor || typeof c.armor === 'string') c.armor = { name: c.armor || '' };
+  if (c.armor.name === undefined) c.armor = { name: '' };
+  populateDropdowns();
+  populateArmorSelect();
   bindFields();
+  // Sync subclass options based on saved class
+  updateSubclassOptions(c.class);
+  // Re-set dropdown values after options populated
+  document.getElementById('ancestrySelect').value = c.ancestry || '';
+  document.getElementById('communitySelect').value = c.community || '';
+  document.getElementById('classSelect').value = c.class || '';
+  document.getElementById('subclassSelect').value = c.subclass || '';
+  document.getElementById('armorSelect').value = c.armor.name || '';
+  // Wire armor dropdown
+  document.getElementById('armorSelect').onchange = function() { onArmorChange(this.value); };
   bindSlotConfig();
   updateDerived();
+  // Recalc derived stats if class is set
+  if (c.class && DAGGERHEART_DATA.classes[c.class]) {
+    recalcStats();
+    save();
+  } else {
+    // Show armor UI even without class
+    const armorData = DAGGERHEART_DATA.armor.find(a => a.name === c.armor.name);
+    const aScore = c.armorScore || 0;
+    const aMaj = c.thresholds.major || 0;
+    const aSev = c.thresholds.severe || 0;
+    document.getElementById('armorScoreDisplay').value = aScore;
+    document.getElementById('armorSlotsDisplay').value = c.armorSlots || 0;
+    document.getElementById('armorMajorDisplay').value = aMaj;
+    document.getElementById('armorSevereDisplay').value = aSev;
+    document.getElementById('armorFeatureDisplay').textContent = armorData ? armorData.feature || '' : '';
+    document.getElementById('combatArmorScore').value = aScore;
+    document.getElementById('combatThreshMajor').value = aMaj;
+    document.getElementById('combatThreshSevere').value = aSev;
+  }
   renderTraits();
   renderSlots('hpSlots', c.hpMax, c.hpMarked, 'filled-hp', toggleHP);
   renderSlots('stressSlots', c.stressMax, c.stressMarked, 'filled-stress', toggleStress);
@@ -1031,6 +1518,7 @@ function loadCharacterUI() {
   renderWeapons();
   renderExperiences();
   renderDomainCards();
+  updateCardBrowser();
 }
 
 // --- Init ---
@@ -1042,7 +1530,7 @@ if (characters.length === 0) {
   newCharacter();
 } else {
   currentId = characters[0].id;
-  populateSelect();
+  populateCharSelect();
   loadCharacterUI();
 }
 </script>
