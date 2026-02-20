@@ -200,6 +200,58 @@ label {
 .narrative-grid .field-group { display: flex; flex-direction: column; }
 .narrative-grid .full { grid-column: 1 / -1; }
 
+/* Environment info panel */
+.env-info-panel {
+  display: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.75rem;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+.env-info-meta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.env-badge {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+}
+.env-badge.env-tier {
+  background: var(--primary-dim);
+  color: var(--bg);
+}
+.env-badge.env-diff {
+  background: var(--card-hover);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.env-description {
+  color: var(--text);
+  font-style: italic;
+  margin-bottom: 0.4rem;
+}
+.env-info-row {
+  margin-top: 0.3rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+.env-info-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dark);
+  display: block;
+  margin-bottom: 0.1rem;
+}
+
 /* BP progress bar */
 .bp-bar-container {
   margin-bottom: 1rem;
@@ -497,7 +549,50 @@ label {
         </div>
         <div class="field-group full">
           <label>Environment</label>
-          <textarea data-field="narrative.environment" placeholder="Terrain, hazards, lighting, notable features..."></textarea>
+          <select data-field="narrative.environment" id="envSelect">
+            <option value="">— Choose an environment —</option>
+            <optgroup label="Tier 1 (Level 1)">
+              <option value="Abandoned Grove">Abandoned Grove — Exploration, Diff 11</option>
+              <option value="Ambushed">Ambushed — Event, Diff: Special</option>
+              <option value="Ambushers">Ambushers — Event, Diff: Special</option>
+              <option value="Bustling Marketplace">Bustling Marketplace — Social, Diff 10</option>
+              <option value="Cliffside Ascent">Cliffside Ascent — Traversal, Diff 12</option>
+              <option value="Local Tavern">Local Tavern — Social, Diff 10</option>
+              <option value="Outpost Town">Outpost Town — Social, Diff 12</option>
+              <option value="Raging River">Raging River — Traversal, Diff 10</option>
+            </optgroup>
+            <optgroup label="Tier 2 (Levels 2–4)">
+              <option value="Cult Ritual">Cult Ritual — Event, Diff 14</option>
+              <option value="Hallowed Temple">Hallowed Temple — Social, Diff 13</option>
+              <option value="Haunted City">Haunted City — Exploration, Diff 14</option>
+              <option value="Mountain Pass">Mountain Pass — Traversal, Diff 15</option>
+            </optgroup>
+            <optgroup label="Tier 3 (Levels 5–7)">
+              <option value="Burning Heart of the Woods">Burning Heart of the Woods — Exploration, Diff 16</option>
+              <option value="Castle Siege">Castle Siege — Event, Diff 17</option>
+              <option value="Pitched Battle">Pitched Battle — Event, Diff 17</option>
+            </optgroup>
+            <optgroup label="Tier 4 (Levels 8–10)">
+              <option value="Chaos Realm">Chaos Realm — Traversal, Diff 20</option>
+              <option value="Divine Usurpation">Divine Usurpation — Event, Diff 20</option>
+              <option value="Imperial Court">Imperial Court — Social, Diff 20</option>
+              <option value="Necromancer's Ossuary">Necromancer's Ossuary — Exploration, Diff 19</option>
+            </optgroup>
+          </select>
+          <div class="env-info-panel" id="envInfoPanel">
+            <div class="env-info-meta">
+              <span class="env-badge" id="envType"></span>
+              <span class="env-badge env-tier" id="envTier"></span>
+              <span class="env-badge env-diff" id="envDifficulty"></span>
+            </div>
+            <p class="env-description" id="envDescription"></p>
+            <div class="env-info-row"><span class="env-info-label">Impulses</span><span id="envImpulses"></span></div>
+            <div class="env-info-row"><span class="env-info-label">Potential Adversaries</span><span id="envAdversaries"></span></div>
+          </div>
+        </div>
+        <div class="field-group full">
+          <label>Environment Notes</label>
+          <textarea data-field="narrative.environmentNotes" placeholder="Custom terrain details, hazards, lighting, special features..."></textarea>
         </div>
         <div class="field-group full">
           <label>Spotlight Hooks</label>
@@ -730,19 +825,46 @@ const ADVERSARY_LIBRARY = [
   { name: 'Fallen Shock Troop', type: 'minion', tier: 4, difficulty: 18, hp: 1, thresholdMajor: 0, thresholdSevere: 0, attack: 'Cursed Axe', damage: '12 physical' },
   { name: 'Fallen Sorcerer', type: 'support', tier: 4, difficulty: 19, hp: 6, thresholdMajor: 26, thresholdSevere: 42, attack: 'Corrupted Staff', damage: '4d6+10 magic' },
   { name: 'Fallen Warlord: Realm-Breaker', type: 'solo', tier: 4, difficulty: 20, hp: 8, thresholdMajor: 36, thresholdSevere: 66, attack: 'Barbed Whip', damage: '4d8+7 physical' },
+  { name: 'Fallen Warlord: Undefeated Champion', type: 'solo', tier: 4, difficulty: 18, hp: 11, thresholdMajor: 35, thresholdSevere: 58, attack: 'Heart-Shattering Sword', damage: '4d12+13 physical' },
   { name: 'Hallowed Archer', type: 'ranged', tier: 4, difficulty: 19, hp: 3, thresholdMajor: 25, thresholdSevere: 45, attack: 'Sanctified Longbow', damage: '4d8+8 physical' },
   { name: 'Hallowed Soldier', type: 'minion', tier: 4, difficulty: 18, hp: 1, thresholdMajor: 0, thresholdSevere: 0, attack: 'Sword and Shield', damage: '10 physical' },
   { name: 'High Seraph', type: 'leader', tier: 4, difficulty: 20, hp: 7, thresholdMajor: 37, thresholdSevere: 70, attack: 'Holy Sword', damage: '4d10+10 physical' },
   { name: 'Kraken', type: 'solo', tier: 4, difficulty: 20, hp: 11, thresholdMajor: 35, thresholdSevere: 70, attack: 'Tentacles', damage: '4d12+10 physical' },
   { name: 'Oracle of Doom', type: 'solo', tier: 4, difficulty: 20, hp: 11, thresholdMajor: 38, thresholdSevere: 68, attack: 'Psychic Attack', damage: '4d8+9 magic' },
   { name: 'Outer Realms Abomination', type: 'bruiser', tier: 4, difficulty: 19, hp: 7, thresholdMajor: 35, thresholdSevere: 71, attack: 'Massive Pseudopod', damage: '4d6+13 magic' },
-  { name: 'Outer Realms Corrupter', type: 'support', tier: 4, difficulty: 19, hp: 4, thresholdMajor: 27, thresholdSevere: 47, attack: 'Corroding Pseudopod', damage: '4d8+5 magic' },
+  { name: 'Outer Realms Corruptor', type: 'support', tier: 4, difficulty: 19, hp: 4, thresholdMajor: 27, thresholdSevere: 47, attack: 'Corroding Pseudopod', damage: '4d8+5 magic' },
   { name: 'Outer Realms Thrall', type: 'minion', tier: 4, difficulty: 17, hp: 1, thresholdMajor: 0, thresholdSevere: 0, attack: 'Claws and Teeth', damage: '11 physical' },
   { name: 'Perfected Zombie', type: 'bruiser', tier: 4, difficulty: 20, hp: 9, thresholdMajor: 40, thresholdSevere: 70, attack: 'Greataxe', damage: '4d12+15 physical' },
   { name: 'Volcanic Dragon: Ashen Tyrant', type: 'solo', tier: 4, difficulty: 18, hp: 8, thresholdMajor: 29, thresholdSevere: 55, attack: 'Claws and Teeth', damage: '4d12+15 physical' },
   { name: 'Volcanic Dragon: Molten Scourge', type: 'solo', tier: 4, difficulty: 20, hp: 7, thresholdMajor: 30, thresholdSevere: 58, attack: 'Lava-Coated Claws', damage: '4d12+4 physical' },
   { name: 'Volcanic Dragon: Obsidian Predator', type: 'solo', tier: 4, difficulty: 19, hp: 6, thresholdMajor: 33, thresholdSevere: 65, attack: 'Obsidian Claws', damage: '4d10+4 physical' },
   { name: 'Zombie Legion', type: 'horde', tier: 4, difficulty: 17, hp: 8, thresholdMajor: 25, thresholdSevere: 45, attack: 'Undead Hands', damage: '4d6+10 physical' }
+];
+
+const ENVIRONMENT_LIBRARY = [
+  // Tier 1
+  { name: 'Abandoned Grove', tier: 1, type: 'Exploration', difficulty: 11, description: 'A former druidic grove lying fallow and fully reclaimed by nature.', impulses: 'Draw in the curious, echo the past', adversaries: 'Beasts (Bear, Dire Wolf, Glass Snake), Grove Guardians (Minor Treant, Sylvan Soldier, Young Dryad)' },
+  { name: 'Ambushed', tier: 1, type: 'Event', difficulty: null, description: 'An ambush is set to catch an unsuspecting party off-guard.', impulses: 'Overwhelm, scatter, surround', adversaries: 'Any' },
+  { name: 'Ambushers', tier: 1, type: 'Event', difficulty: null, description: 'An ambush is set by the PCs to catch unsuspecting adversaries off-guard.', impulses: 'Escape, group up, protect the most vulnerable', adversaries: 'Any' },
+  { name: 'Bustling Marketplace', tier: 1, type: 'Social', difficulty: 10, description: 'The economic heart of the settlement, with local artisans, traveling merchants, and patrons across social classes.', impulses: 'Buy low and sell high, tempt and tantalize with wares from near and far', adversaries: 'Guards (Bladed Guard, Head Guard), Masked Thief, Merchant' },
+  { name: 'Cliffside Ascent', tier: 1, type: 'Traversal', difficulty: 12, description: 'A steep, rocky cliffside tall enough to make traversal dangerous.', impulses: 'Cast the unready down to a rocky doom, draw people in with promise of what lies at the top', adversaries: 'Construct, Deeproot Defender, Giant Scorpion, Glass Snake' },
+  { name: 'Local Tavern', tier: 1, type: 'Social', difficulty: 10, description: 'A lively tavern that serves as the social hub for its town.', impulses: 'Provide opportunities for adventurers, nurture community', adversaries: 'Guards (Bladed Guard, Head Guard), Mercenaries (Harrier, Sellsword, Spellblade, Weaponmaster), Merchant' },
+  { name: 'Outpost Town', tier: 1, type: 'Social', difficulty: 12, description: 'A small town on the outskirts of a nation or region, close to a dungeon, tombs, or other adventuring destinations.', impulses: 'Drive the desperate to certain doom, profit off of ragged hope', adversaries: 'Jagged Knife Bandits (Hexer, Kneebreaker, Lackey, Lieutenant, Shadow, Sniper), Masked Thief, Merchant' },
+  { name: 'Raging River', tier: 1, type: 'Traversal', difficulty: 10, description: 'A swift-moving river without a bridge crossing, deep enough to sweep away most people.', impulses: 'Bar crossing, carry away the unready, divide the land', adversaries: 'Beasts (Bear, Glass Snake), Jagged Knife Bandits (Hexer, Kneebreaker, Lackey, Lieutenant, Shadow, Sniper)' },
+  // Tier 2
+  { name: 'Cult Ritual', tier: 2, type: 'Event', difficulty: 14, description: 'A Fallen cult assembles around a sigil of the defeated gods and a bonfire that burns a sickly shade of green.', impulses: 'Profane the land, unite the Mortal Realm with the Circles Below', adversaries: 'Cult of the Fallen (Cult Adept, Cult Fang, Cult Initiate, Secret-Keeper)' },
+  { name: 'Hallowed Temple', tier: 2, type: 'Social', difficulty: 13, description: 'A bustling but well-kept temple that provides healing and hosts regular services, overseen by a priest or seraph.', impulses: 'Connect the Mortal Realm with the Hallows Above, display the power of the divine, provide aid and succor to the faithful', adversaries: 'Guards (Archer Guard, Bladed Guard, Head Guard)' },
+  { name: 'Haunted City', tier: 2, type: 'Exploration', difficulty: 14, description: 'An abandoned city populated by the restless spirits of eras past.', impulses: 'Misdirect and disorient, replay apocalypses both public and personal', adversaries: 'Ghosts (Spectral Archer, Spectral Captain, Spectral Guardian), ghostly versions of other adversaries' },
+  { name: 'Mountain Pass', tier: 2, type: 'Traversal', difficulty: 15, description: 'Stony peaks that pierce the clouds, with a twisting path winding its way up and over through many switchbacks.', impulses: 'Exact a chilling toll in supplies and stamina, reveal magical tampering, slow down travel', adversaries: 'Beasts (Bear, Giant Eagle, Glass Snake), Chaos Skull, Minotaur Wrecker, Mortal Hunter' },
+  // Tier 3
+  { name: 'Burning Heart of the Woods', tier: 3, type: 'Exploration', difficulty: 16, description: 'Thick indigo ash fills the air around a towering moss-covered tree that burns eternally with flames a sickly shade of blue.', impulses: 'Beat out an uncanny rhythm for all to follow, corrupt the woods', adversaries: 'Beasts (Bear, Glass Snake), Elementals (Elemental Spark), Verdant Defenders (Dryad, Oak Treant, Stag Knight)' },
+  { name: 'Castle Siege', tier: 3, type: 'Event', difficulty: 17, description: 'An active siege with an attacking force fighting to gain entry to a fortified castle.', impulses: 'Bleed out the will to fight, breach the walls, build tension', adversaries: 'Mercenaries (Harrier, Sellsword, Spellblade, Weaponmaster), Noble Forces (Archer Squadron, Conscript, Elite Soldier, Knight of the Realm)' },
+  { name: 'Pitched Battle', tier: 3, type: 'Event', difficulty: 17, description: 'A massive combat between two large groups of armed combatants.', impulses: 'Seize people, land, and wealth, spill blood for greed and glory', adversaries: 'Mercenaries (Sellsword, Harrier, Spellblade, Weaponmaster), Noble Forces (Archer Squadron, Conscript, Elite Soldier, Knight of the Realm)' },
+  // Tier 4
+  { name: 'Chaos Realm', tier: 4, type: 'Traversal', difficulty: 20, description: 'An otherworldly space where the laws of reality are unstable and dangerous.', impulses: 'Annihilate certainty, consume power, defy logic', adversaries: 'Outer Realms Monstrosities (Abomination, Corruptor, Thrall)' },
+  { name: 'Divine Usurpation', tier: 4, type: 'Event', difficulty: 20, description: 'A massive ritual designed to breach the gates of the Hallows Above and unseat the New Gods themselves.', impulses: 'Collect power, overawe, silence dissent', adversaries: 'Arch-Necromancer, Fallen Shock Troops, Mortal Hunter, Oracle of Doom, Perfected Zombie' },
+  { name: 'Imperial Court', tier: 4, type: 'Social', difficulty: 20, description: 'The majestic domain of a powerful empire, lavishly appointed with stolen treasures.', impulses: 'Justify and perpetuate imperial rule, seduce rivals with promises of power and comfort', adversaries: 'Bladed Guard, Courtesan, Knight of the Realm, Monarch, Spy' },
+  { name: "Necromancer's Ossuary", tier: 4, type: 'Exploration', difficulty: 19, description: 'A dusty crypt with a library, twisting corridors, and abundant sarcophagi, spattered with the blood of ill-fated invaders.', impulses: 'Confound intruders, delve into secrets best left buried, manifest unlife, unleash a tide of undead', adversaries: "Arch-Necromancer's Host (Perfected Zombie, Zombie Legion)" },
 ];
 
 function uuid() {
@@ -756,7 +878,7 @@ function defaultEncounter() {
     partySize: 4,
     partyTier: '1',
     difficulty: 'standard',
-    narrative: { goal: '', stakes: '', twist: '', environment: '', spotlightHooks: '' },
+    narrative: { goal: '', stakes: '', twist: '', environment: '', environmentNotes: '', spotlightHooks: '' },
     adversaries: [],
     tracker: { fear: 0, round: 1, notes: '' },
     notes: ''
@@ -1043,9 +1165,27 @@ function bindFields() {
       if (field === 'partySize' || field === 'partyTier' || field === 'difficulty') {
         updateBudgetDisplay();
       }
+      if (field === 'narrative.environment') {
+        updateEnvPanel(v);
+      }
       save();
     };
   });
+}
+
+// --- Environment info panel ---
+function updateEnvPanel(name) {
+  const panel = document.getElementById('envInfoPanel');
+  if (!name) { panel.style.display = 'none'; return; }
+  const env = ENVIRONMENT_LIBRARY.find(e => e.name === name);
+  if (!env) { panel.style.display = 'none'; return; }
+  document.getElementById('envType').textContent = env.type;
+  document.getElementById('envTier').textContent = 'Tier ' + env.tier;
+  document.getElementById('envDifficulty').textContent = env.difficulty != null ? 'Diff ' + env.difficulty : 'Diff: Special';
+  document.getElementById('envDescription').textContent = env.description;
+  document.getElementById('envImpulses').textContent = env.impulses;
+  document.getElementById('envAdversaries').textContent = env.adversaries;
+  panel.style.display = 'block';
 }
 
 // --- Section collapse ---
@@ -1064,6 +1204,7 @@ function esc(s) {
 function loadEncounterUI() {
   const enc = current(); if (!enc) return;
   bindFields();
+  updateEnvPanel(enc.narrative?.environment ?? '');
   updateBudgetDisplay();
   renderAdversaries();
   document.getElementById('fearValue').textContent = enc.tracker.fear || 0;
