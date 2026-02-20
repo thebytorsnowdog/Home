@@ -363,6 +363,14 @@ label {
   margin-top: 0.5rem;
 }
 
+/* Domain card two-column layout */
+.domain-col-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
 /* Domain card groups */
 .domain-group { margin-bottom: 1rem; }
 .domain-group:last-child { margin-bottom: 0; }
@@ -454,6 +462,7 @@ label {
   .traits-grid { grid-template-columns: repeat(2, 1fr); }
   .identity-grid { grid-template-columns: 1fr 1fr; }
   header { flex-direction: column; text-align: center; }
+  .domain-col-wrap { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
   .traits-grid { grid-template-columns: 1fr 1fr; }
@@ -698,34 +707,40 @@ label {
   </div>
 
   <!-- Domain Cards -->
-  <div class="section" data-section="domain">
+  <div class="section full-width" data-section="domain">
     <div class="section-header" onclick="toggleSection(this)">
       <h2>Domain Cards</h2>
       <span class="chevron">&#9660;</span>
     </div>
     <div class="section-body">
-      <div class="domain-group" id="cardBrowserGroup" style="display:none">
-        <div class="domain-group-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="toggleCardBrowser()">
-          <span>Card Browser</span>
-          <span class="chevron" id="browserChevron">&#9660;</span>
+      <div class="domain-col-wrap">
+        <div class="domain-col-left">
+          <div class="domain-group" id="cardBrowserGroup" style="display:none">
+            <div class="domain-group-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="toggleCardBrowser()">
+              <span>Card Browser</span>
+              <span class="chevron" id="browserChevron">&#9660;</span>
+            </div>
+            <div id="cardBrowserBody">
+              <div class="domain-tabs" id="domainTabs"></div>
+              <div id="browserCardList"></div>
+            </div>
+          </div>
         </div>
-        <div id="cardBrowserBody">
-          <div class="domain-tabs" id="domainTabs"></div>
-          <div id="browserCardList"></div>
-        </div>
-      </div>
-      <div class="domain-group">
-        <div class="domain-group-title">Loadout</div>
-        <div id="loadoutList"></div>
-        <div class="add-row">
-          <button class="btn btn-sm" onclick="addDomainCard('loadout')">+ Add to Loadout</button>
-        </div>
-      </div>
-      <div class="domain-group">
-        <div class="domain-group-title">Vault</div>
-        <div id="vaultList"></div>
-        <div class="add-row">
-          <button class="btn btn-sm" onclick="addDomainCard('vault')">+ Add to Vault</button>
+        <div class="domain-col-right">
+          <div class="domain-group">
+            <div class="domain-group-title">Loadout</div>
+            <div id="loadoutList"></div>
+            <div class="add-row">
+              <button class="btn btn-sm" onclick="addDomainCard('loadout')">+ Add to Loadout</button>
+            </div>
+          </div>
+          <div class="domain-group">
+            <div class="domain-group-title">Vault</div>
+            <div id="vaultList"></div>
+            <div class="add-row">
+              <button class="btn btn-sm" onclick="addDomainCard('vault')">+ Add to Vault</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
